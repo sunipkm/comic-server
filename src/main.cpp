@@ -14,7 +14,10 @@ int main()
     {
         cam = new CCameraUnit_ATIK();
         if (cam->CameraReady())
+        {
+            std::cout << "Camera ready\n";
             break;
+        }
         else
         {
             delete cam;
