@@ -79,11 +79,27 @@ int CCameraUnit_ATIK::ArtemisGetCameraState(ArtemisHandle h)
 }
 
 CCameraUnit_ATIK::CCameraUnit_ATIK()
-    : binningX_(1), binningY_(1), cancelCapture_(true), CCDHeight_(0), CCDWidth_(0), imageLeft_(0), imageRight_(0), imageTop_(0), imageBottom_(0), roiLeft(0), roiRight(0), roiBottom(0), roiTop(0), exposure_(0), lastError_(0), m_initializationOK(false), requestShutterOpen_(true)
+    : hCam(NULL),
+      m_initializationOK(false),
+      cancelCapture_(true),
+      hasshutter(false),
+      numtempsensors(0),
+      binningX_(1),
+      binningY_(1),
+      imageLeft_(0),
+      imageRight_(0),
+      imageTop_(0),
+      imageBottom_(0),
+      roiLeft(0),
+      roiRight(0),
+      roiTop(0),
+      roiBottom(0),
+      roi_updated_(false),
+      CCDWidth_(0),
+      CCDHeight_(0)
 {
     // do initialization stuff
     short numcameras = 0;
-    bool bytemode = false;
     // initialize camera
 
 #ifdef _WIN32

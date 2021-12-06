@@ -29,8 +29,8 @@ public:
 class CImageData
 {
 
-    int m_imageWidth;
     int m_imageHeight;
+    int m_imageWidth;
 
     unsigned short *m_imageData;
 

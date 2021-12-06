@@ -25,21 +25,21 @@ void CImageData::ClearImage()
 
     if (m_jpegData != nullptr)
     {
-        delete [] m_jpegData;
+        delete[] m_jpegData;
         m_jpegData = nullptr;
     }
     // printf("ClearImage: %p, %d, %d\n", m_imageData, m_imageWidth, m_imageHeight);
 }
 
 CImageData::CImageData()
-    : m_imageData(NULL), m_imageHeight(0), m_imageWidth(0), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(0)
+    : m_imageHeight(0), m_imageWidth(0), m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
     // printf("Default constructor\n");
     ClearImage();
 }
 
 CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, bool enableJpeg)
-    : m_imageData(0), m_jpegData(nullptr), sz_jpegData(-1)
+    : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
     // printf("Malloc constructor\n");
     ClearImage();
@@ -75,7 +75,7 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
 }
 
 CImageData::CImageData(const CImageData &rhs)
-    : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1)
+    : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
     // printf("RHS called\n");
     ClearImage();
@@ -318,7 +318,6 @@ void CImageData::FlipHorizontal()
 
 void CImageData::ConvertJPEG()
 {
-    bool retval = true;
     // source raw image
     uint16_t *imgptr = m_imageData;
     // temporary bitmap buffer
@@ -326,7 +325,7 @@ void CImageData::ConvertJPEG()
     // Data conversion
     for (int i = 0; i < m_imageWidth * m_imageHeight; i++) // for each pixel in raw image
     {
-        int idx = 3 * i;      // RGB pixel in JPEG source bitmap
+        int idx = 3 * i;         // RGB pixel in JPEG source bitmap
         if (imgptr[i] >= 0xffff) // saturation
         {
             data[idx + 0] = 0xff;
@@ -348,7 +347,6 @@ void CImageData::ConvertJPEG()
         m_jpegData = nullptr;
     }
     m_jpegData = new uint8_t[m_imageWidth * m_imageHeight * 4 + 1024]; // extra room for JPEG conversion
-    int j_data_sz = (m_imageWidth * m_imageHeight * 4 + 1024);
     // JPEG parameters
     jpge::params params;
     params.m_quality = 100;

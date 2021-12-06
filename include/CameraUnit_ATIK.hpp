@@ -43,10 +43,6 @@ class CCameraUnit_ATIK : public CCameraUnit
 
     int CCDWidth_;
     int CCDHeight_;
-    int CCDgain_;
-    bool gain_updated_;
-
-    mutable volatile unsigned int lastError_;
 
     char cam_name[100];
 
