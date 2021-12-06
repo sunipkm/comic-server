@@ -167,12 +167,7 @@ close:
 CCameraUnit_ATIK::~CCameraUnit_ATIK()
 {
     CriticalSection::Lock lock(criticalSection_);
-    int retryCount = 10;
-    if (ArtemisIsConnected(hCam))
-        while (!ArtemisDisconnect(hCam) && (retryCount--))
-            ;
-    else
-        eprintlf("Artemis camera %s has been disconnected already", cam_name);
+    while (!ArtemisDisconnect(hCam));
     m_initializationOK = false;
 #ifdef _WIN32
     ArtemisUnLoadDLL();
