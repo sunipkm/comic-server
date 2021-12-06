@@ -164,7 +164,7 @@ CCameraUnit_ATIK::CCameraUnit_ATIK()
     HasError(ArtemisCanControlShutter(hCam, &hasshutter), __LINE__);
 
     // Set subsample
-    HasError(ArtemisSetSubSample(hCam, true), __LINE__);
+    HasError(ArtemisSetSubSample(hCam, false), __LINE__);
 
     // Initialization done
     m_initializationOK = true;
