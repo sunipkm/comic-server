@@ -357,19 +357,19 @@ void CCameraUnit_ATIK::SetBinningAndROI(int binX, int binY, int x_min, int x_max
     imageTop = y_min / binningY_;
     imageBottom = (y_max - y_min) / binningY_ + imageTop;
 
-    if (imageRight > GetCCDWidth() - 1)
-        imageRight = GetCCDWidth() - 1;
+    if (imageRight > GetCCDWidth() / binningX_)
+        imageRight = GetCCDWidth() / binningX_;
     if (imageLeft < 0)
         imageLeft = 0;
-    if (imageRight <= imageLeft_)
-        imageRight = GetCCDWidth() - 1;
+    if (imageRight <= imageLeft)
+        imageRight = GetCCDWidth() / binningX_;
 
-    if (imageTop > GetCCDHeight() - 1)
-        imageTop = GetCCDHeight() - 1;
-    if (imageBottom < 0)
-        imageBottom = 0;
-    if (imageTop <= imageBottom_)
-        imageTop = GetCCDHeight() - 1;
+    if (imageBottom > GetCCDWidth() / binningX_)
+        imageBottom = GetCCDHeight() / binningX_;
+    if (imageTop < 0)
+        imageTop = 0;
+    if (imageBottom <= imageTop)
+        imageBottom = GetCCDHeight() / binningX_;
 
     eprintlf("%d %d %d %d", imageLeft, imageRight, imageTop, imageBottom);
 
