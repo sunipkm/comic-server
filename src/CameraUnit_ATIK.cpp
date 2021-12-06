@@ -191,6 +191,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     CriticalSection::Lock lock(criticalSection_);
     CImageData retVal;
     cancelCapture_ = false;
+    BOOL image_ready;
 
     void *pImgBuf;
 
@@ -225,16 +226,18 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
 
     lock.Relock();
     printf("Out of sleep\n");
-    while (!ArtemisImageReady(hCam))
+    while (!(image_ready = ArtemisImageReady(hCam)))
     {
+        printf("Checking artemis delay\n");
         cameraState = ArtemisGetCameraState(hCam);
+        printf("Status: %s", status_.c_str());
         if (cameraState == CAMERA_DOWNLOADING)
         {
             status_ += std::string(" Download: ");
             status_ += std::to_string(ArtemisDownloadPercent(hCam));
             status_ += " %";
+            printf("Status: %s", status_.c_str());
         }
-        printf("Status: %s", status_.c_str());
         Sleep(5);
     }
     printf("Image ready\n");
