@@ -224,6 +224,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     Sleep(sleep_time_ms);
 
     lock.Relock();
+    printf("Out of sleep\n");
     while (!ArtemisImageReady(hCam))
     {
         cameraState = ArtemisGetCameraState(hCam);
@@ -233,6 +234,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
             status_ += std::to_string(ArtemisDownloadPercent(hCam));
             status_ += " %";
         }
+        printf("Status: %s", status_.c_str());
         Sleep(5);
     }
 
