@@ -38,8 +38,8 @@ CImageData::CImageData()
     ClearImage();
 }
 
-CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData,bool enableJpeg)
-    : m_imageData(0)
+CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, bool enableJpeg)
+    : m_imageData(0), m_jpegData(nullptr), sz_jpegData(-1)
 {
     // printf("Malloc constructor\n");
     ClearImage();
@@ -75,7 +75,7 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
 }
 
 CImageData::CImageData(const CImageData &rhs)
-    : m_imageData(NULL)
+    : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1)
 {
     // printf("RHS called\n");
     ClearImage();

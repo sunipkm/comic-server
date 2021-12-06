@@ -235,9 +235,9 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
             status_ += std::string(" Download: ");
             status_ += std::to_string(ArtemisDownloadPercent(hCam));
             status_ += " %";
-            printf("Status: %s", status_.c_str());
         }
-        Sleep(5);
+        printf("Status: %s\n", status_.c_str());
+        Sleep(10);
     }
     printf("Image ready\n");
     if (HasError(ArtemisGetImageData(hCam, &x, &y, &w, &h, &binx, &biny), __LINE__))
@@ -246,13 +246,13 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
         goto exit_err;
     }
     printf("Got image data\n");
-    retVal = CImageData(w, h);
+    pImgBuf = ArtemisImageBuffer(hCam);
+    printf("Image buffer %p", pImgBuf);
     printf("%d %d %d %d %d %d\n", x, y, w, h, binx, biny);
     binningX_ = binx;
     binningY_ = biny;
 
-    pImgBuf = ArtemisImageBuffer(hCam);
-    printf("Image buffer %p", pImgBuf);
+    retVal = CImageData(w, h);
     if (pImgBuf == NULL)
     {
         eprintlf("Image buffer is NULL");
