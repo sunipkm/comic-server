@@ -83,7 +83,7 @@ CCameraUnit_ATIK::CCameraUnit_ATIK()
 {
     // do initialization stuff
     short numcameras = 0;
-
+    bool bytemode = false;
     // initialize camera
 
 #ifdef _WIN32
@@ -158,7 +158,8 @@ CCameraUnit_ATIK::CCameraUnit_ATIK()
     HasError(ArtemisBin(hCam, 1, 1), __LINE__);
 
     // Set 8-bit mode to false
-    HasError(ArtemisEightBitMode(hCam, false), __LINE__);
+    if (!HasError(ArtemisGetEightBitMode(hCam, &bytemode), __LINE__))
+        HasError(ArtemisEightBitMode(hCam, false), __LINE__);
 
     // Get number of temperature sensors
     HasError(ArtemisTemperatureSensorInfo(hCam, 0, &numtempsensors), __LINE__);
