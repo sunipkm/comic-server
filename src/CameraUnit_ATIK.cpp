@@ -159,6 +159,7 @@ CCameraUnit_ATIK::CCameraUnit_ATIK()
     // Initialization done
     m_initializationOK = true;
 
+    return;
 close:
     ArtemisDisconnect(hCam);
     m_initializationOK = false;
