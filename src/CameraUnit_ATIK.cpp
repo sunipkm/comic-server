@@ -157,10 +157,6 @@ CCameraUnit_ATIK::CCameraUnit_ATIK()
     // Set binning to 1x1
     HasError(ArtemisBin(hCam, 1, 1), __LINE__);
 
-    // Set 8-bit mode to false
-    if (!HasError(ArtemisGetEightBitMode(hCam, &bytemode), __LINE__))
-        HasError(ArtemisEightBitMode(hCam, false), __LINE__);
-
     // Get number of temperature sensors
     HasError(ArtemisTemperatureSensorInfo(hCam, 0, &numtempsensors), __LINE__);
 
