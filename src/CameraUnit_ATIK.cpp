@@ -352,24 +352,24 @@ void CCameraUnit_ATIK::SetBinningAndROI(int binX, int binY, int x_min, int x_max
 
     int imageLeft, imageRight, imageTop, imageBottom;
 
-    imageLeft = x_min / binningX_;
-    imageRight = (x_max - x_min) / binningX_ + imageLeft;
-    imageTop = y_min / binningY_;
-    imageBottom = (y_max - y_min) / binningY_ + imageTop;
+    imageLeft = x_min;
+    imageRight = (x_max - x_min) + imageLeft;
+    imageTop = y_min;
+    imageBottom = (y_max - y_min) + imageTop;
 
-    if (imageRight > GetCCDWidth() / binningX_)
-        imageRight = GetCCDWidth() / binningX_;
+    if (imageRight > GetCCDWidth())
+        imageRight = GetCCDWidth();
     if (imageLeft < 0)
         imageLeft = 0;
     if (imageRight <= imageLeft)
-        imageRight = GetCCDWidth() / binningX_;
+        imageRight = GetCCDWidth();
 
-    if (imageBottom > GetCCDWidth() / binningX_)
-        imageBottom = GetCCDHeight() / binningX_;
+    if (imageBottom > GetCCDWidth())
+        imageBottom = GetCCDHeight();
     if (imageTop < 0)
         imageTop = 0;
     if (imageBottom <= imageTop)
-        imageBottom = GetCCDHeight() / binningX_;
+        imageBottom = GetCCDHeight();
 
     eprintlf("%d %d %d %d", imageLeft, imageRight, imageTop, imageBottom);
 
@@ -380,19 +380,19 @@ void CCameraUnit_ATIK::SetBinningAndROI(int binX, int binY, int x_min, int x_max
         imageTop_ = imageTop_;
         imageBottom_ = imageBottom_;
         roiLeft = imageLeft;
-        roiRight = imageRight + 1;
+        roiRight = imageRight;
         roiBottom = imageBottom;
-        roiTop = imageTop + 1;
+        roiTop = imageTop;
     }
     else
     {
         imageLeft_ = 0;
-        imageRight_ = GetCCDWidth() / binningX_ - 1;
+        imageRight_ = GetCCDWidth();
         imageTop_ = 0;
-        imageBottom_ = GetCCDHeight() / binningY_ - 1;
+        imageBottom_ = GetCCDHeight();
         roiLeft = imageLeft_;
-        roiRight = imageRight_ + 1;
-        roiBottom = imageBottom_ + 1;
+        roiRight = imageRight_;
+        roiBottom = imageBottom_;
         roiTop = imageTop_;
     }
 
