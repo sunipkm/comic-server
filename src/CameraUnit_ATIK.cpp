@@ -75,6 +75,7 @@ int CCameraUnit_ATIK::ArtemisGetCameraState(ArtemisHandle h)
         ARTEMIS_STATE(CAMERA_FLUSHING)
 #undef ARTEMIS_STATE
     }
+    return state;
 }
 
 CCameraUnit_ATIK::CCameraUnit_ATIK()
