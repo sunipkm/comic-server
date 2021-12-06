@@ -286,7 +286,7 @@ double CCameraUnit_ATIK::GetTemperature() const
 
     double retVal;
 
-    retVal = double(temperature) / 10;
+    retVal = double(temperature) / 100;
     return retVal;
 }
 
