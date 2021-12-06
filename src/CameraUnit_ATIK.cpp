@@ -166,6 +166,9 @@ CCameraUnit_ATIK::CCameraUnit_ATIK()
     // Get shutter caps
     HasError(ArtemisCanControlShutter(hCam, &hasshutter), __LINE__);
 
+    // Set subsample
+    HasError(ArtemisSetSubSample(hCam, true), __LINE__);
+
     // Initialization done
     m_initializationOK = true;
 
@@ -252,6 +255,14 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     printf("%d %d %d %d %d %d\n", x, y, w, h, binx, biny);
     binningX_ = binx;
     binningY_ = biny;
+    roiLeft = x;
+    roiRight = w;
+    roiTop = y;
+    roiBottom = h;
+    imageLeft_ = 0;
+    imageRight_ = w;
+    imageTop_ = 0;
+    imageRight_ = h;
 
     retVal = CImageData(w, h);
     if (pImgBuf == NULL)
@@ -360,7 +371,9 @@ void CCameraUnit_ATIK::SetBinningAndROI(int binX, int binY, int x_min, int x_max
     if (imageTop <= imageBottom_)
         imageTop = GetCCDHeight() - 1;
 
-    if (!HasError(ArtemisSubframe(hCam, imageLeft_, imageTop_, imageBottom_ - imageTop_, imageRight_ - imageLeft_), __LINE__))
+    eprintlf("%d %d %d %d", imageLeft, imageRight, imageTop, imageBottom);
+
+    if (!HasError(ArtemisSubframe(hCam, imageLeft, imageTop, imageBottom - imageTop, imageRight - imageLeft), __LINE__))
     {
         imageLeft_ = imageLeft;
         imageRight_ = imageRight;
