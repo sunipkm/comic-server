@@ -23,10 +23,10 @@ else
         ifeq ($(UNAME_P),x86_64)
         	EDLDFLAGS += -L lib/linux/64/NoFlyCapture -latikcameras
     	endif
-    	ifneq ($(filter %86,$(UNAME_P)),)
+    	ifeq ($(filter %86,$(UNAME_P)),)
         	CCFLAGS += -D IA32
     	endif
-    	ifneq ($(filter arm%,$(UNAME_P)),)
+    	ifeq ($(filter arm%,$(UNAME_P)),)
         	EDLDFLAGS += -L lib/ARM/32/NoFlyCapture -latikcameras
     	endif
     endif
