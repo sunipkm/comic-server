@@ -187,7 +187,7 @@ void CCameraUnit_ATIK::CancelCapture()
 
 CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
 {
-    // printf("Starting capture image\n");
+    printf("Starting capture image\n");
     CriticalSection::Lock lock(criticalSection_);
     CImageData retVal;
     cancelCapture_ = false;
@@ -196,7 +196,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
 
     int x, y, w, h, binx, biny;
 
-    uint32_t sleep_time_ms = 0;
+    int sleep_time_ms = 0;
 
     int cameraState = 0;
 
@@ -204,6 +204,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     if (exposure_ms < 1)
         exposure_ms = 1;
 
+    printf("Exposure: %d ms\n", exposure_ms);
     if (!m_initializationOK)
     {
         goto exit_err;
@@ -213,8 +214,11 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     {
         goto exit_err;
     }
-
+    printf("Exposure started\n");
     sleep_time_ms = 1000 * ArtemisExposureTimeRemaining(hCam); // sleep time in ms
+    printf("Sleep time: %d ms\n", sleep_time_ms);
+    if (sleep_time_ms < 0)
+        sleep_time_ms = 0;
     lock.Unlock();
 
     Sleep(sleep_time_ms);
