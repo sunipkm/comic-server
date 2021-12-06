@@ -229,9 +229,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     printf("Out of sleep\n");
     while (!(image_ready = ArtemisImageReady(hCam)))
     {
-        printf("Checking artemis delay\n");
         cameraState = ArtemisGetCameraState(hCam);
-        printf("Status: %s", status_.c_str());
         if (cameraState == CAMERA_DOWNLOADING)
         {
             status_ += std::string(" Download: ");
@@ -249,6 +247,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     }
     printf("Got image data\n");
     retVal = CImageData(w, h);
+    printf("%d %d %d %d %d %d\n", x, y, w, h, binx, biny);
     binningX_ = binx;
     binningY_ = biny;
 
