@@ -253,13 +253,13 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     binningX_ = binx;
     binningY_ = biny;
 
-    retVal = CImageData(w + 1, h + 1);
+    retVal = CImageData(w, h);
     if (pImgBuf == NULL)
     {
         eprintlf("Image buffer is NULL");
         goto exit_err;
     }
-    memcpy(retVal.GetImageData(), pImgBuf, (w + 1) * (h + 1) * 2);
+    memcpy(retVal.GetImageData(), pImgBuf, w * h * 2);
 exit_err:
     // printf("Exiting capture\n");
     return retVal;
