@@ -252,17 +252,9 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
         goto exit_err;
     }
     pImgBuf = ArtemisImageBuffer(hCam);
-    printf("%d %d %d %d %d %d\n", x, y, w, h, binx, biny);
+
     binningX_ = binx;
     binningY_ = biny;
-    roiLeft = x;
-    roiRight = w;
-    roiTop = y;
-    roiBottom = h;
-    imageLeft_ = 0;
-    imageRight_ = w;
-    imageTop_ = 0;
-    imageRight_ = h;
 
     retVal = CImageData(w, h);
     if (pImgBuf == NULL)
@@ -370,8 +362,6 @@ void CCameraUnit_ATIK::SetBinningAndROI(int binX, int binY, int x_min, int x_max
         imageTop = 0;
     if (imageBottom <= imageTop)
         imageBottom = GetCCDHeight();
-
-    eprintlf("%d %d %d %d", imageLeft, imageRight, imageTop, imageBottom);
 
     if (!HasError(ArtemisSubframe(hCam, imageLeft, imageTop, imageRight - imageLeft, imageBottom - imageTop), __LINE__))
     {
