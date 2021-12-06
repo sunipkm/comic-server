@@ -142,6 +142,15 @@ CCameraUnit_ATIK::CCameraUnit_ATIK()
     CCDHeight_ = int(props.nPixelsY);
     CCDWidth_ = int(props.nPixelsX);
 
+    imageLeft_ = 0;
+    imageRight_ = CCDWidth_;
+    imageTop_ = 0;
+    imageBottom_ = CCDHeight_;
+    roiLeft = imageLeft_;
+    roiRight = imageRight_;
+    roiTop = imageTop_;
+    roiBottom = imageBottom_;
+
     // Set preview mode to false
     HasError(ArtemisSetPreview(hCam, false), __LINE__);
 
@@ -169,7 +178,8 @@ close:
 CCameraUnit_ATIK::~CCameraUnit_ATIK()
 {
     CriticalSection::Lock lock(criticalSection_);
-    while (!ArtemisDisconnect(hCam));
+    while (!ArtemisDisconnect(hCam))
+        ;
     m_initializationOK = false;
 #ifdef _WIN32
     ArtemisUnLoadDLL();
@@ -243,13 +253,13 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     binningX_ = binx;
     binningY_ = biny;
 
-    retVal = CImageData(w, h);
+    retVal = CImageData(w + 1, h + 1);
     if (pImgBuf == NULL)
     {
         eprintlf("Image buffer is NULL");
         goto exit_err;
     }
-    memcpy(retVal.GetImageData(), pImgBuf, w * h * 2);
+    memcpy(retVal.GetImageData(), pImgBuf, (w + 1) * (h + 1) * 2);
 exit_err:
     // printf("Exiting capture\n");
     return retVal;
@@ -329,31 +339,49 @@ void CCameraUnit_ATIK::SetBinningAndROI(int binX, int binY, int x_min, int x_max
         binningX_ = binX;
     }
 
-    imageLeft_ = x_min / binningX_;
-    imageRight_ = (x_max - x_min) / binningX_ + imageLeft_;
-    imageTop_ = y_min / binningY_;
-    imageBottom_ = (y_max - y_min) / binningY_ + imageTop_;
+    int imageLeft, imageRight, imageTop, imageBottom;
 
-    if (imageRight_ > GetCCDWidth() - 1)
-        imageRight_ = GetCCDWidth() - 1;
-    if (imageLeft_ < 0)
+    imageLeft = x_min / binningX_;
+    imageRight = (x_max - x_min) / binningX_ + imageLeft;
+    imageTop = y_min / binningY_;
+    imageBottom = (y_max - y_min) / binningY_ + imageTop;
+
+    if (imageRight > GetCCDWidth() - 1)
+        imageRight = GetCCDWidth() - 1;
+    if (imageLeft < 0)
+        imageLeft = 0;
+    if (imageRight <= imageLeft_)
+        imageRight = GetCCDWidth() - 1;
+
+    if (imageTop > GetCCDHeight() - 1)
+        imageTop = GetCCDHeight() - 1;
+    if (imageBottom < 0)
+        imageBottom = 0;
+    if (imageTop <= imageBottom_)
+        imageTop = GetCCDHeight() - 1;
+
+    if (!HasError(ArtemisSubframe(hCam, imageLeft_, imageTop_, imageBottom_ - imageTop_, imageRight_ - imageLeft_), __LINE__))
+    {
+        imageLeft_ = imageLeft;
+        imageRight_ = imageRight;
+        imageTop_ = imageTop_;
+        imageBottom_ = imageBottom_;
+        roiLeft = imageLeft;
+        roiRight = imageRight + 1;
+        roiBottom = imageBottom;
+        roiTop = imageTop + 1;
+    }
+    else
+    {
         imageLeft_ = 0;
-    if (imageRight_ <= imageLeft_)
-        imageRight_ = GetCCDWidth() - 1;
-
-    if (imageTop_ > GetCCDHeight() - 1)
-        imageTop_ = GetCCDHeight() - 1;
-    if (imageBottom_ < 0)
-        imageBottom_ = 0;
-    if (imageTop_ <= imageBottom_)
-        imageTop_ = GetCCDHeight() - 1;
-
-    roiLeft = imageLeft_;
-    roiRight = imageRight_ + 1;
-    roiBottom = imageBottom_;
-    roiTop = imageTop_ + 1;
-
-    HasError(ArtemisSubframe(hCam, imageLeft_, imageTop_, imageBottom_ - imageTop_, imageRight_ - imageLeft_), __LINE__);
+        imageRight_ = GetCCDWidth() / binningX_ - 1;
+        imageTop_ = 0;
+        imageBottom_ = GetCCDHeight() / binningY_ - 1;
+        roiLeft = imageLeft_;
+        roiRight = imageRight_ + 1;
+        roiBottom = imageBottom_ + 1;
+        roiTop = imageTop_;
+    }
 
     // printf("%d %d, %d %d | %d %d\n", binningX_, binningY_, imageLeft_, imageRight_, imageBottom_, imageTop_);
 }
