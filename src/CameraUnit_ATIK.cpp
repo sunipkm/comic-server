@@ -237,17 +237,19 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
         printf("Status: %s", status_.c_str());
         Sleep(5);
     }
-
+    printf("Image ready\n");
     if (HasError(ArtemisGetImageData(hCam, &x, &y, &w, &h, &binx, &biny), __LINE__))
     {
         eprintlf("Error getting image data");
         goto exit_err;
     }
+    printf("Got image data\n");
     retVal = CImageData(w, h);
     binningX_ = binx;
     binningY_ = biny;
 
     pImgBuf = ArtemisImageBuffer(hCam);
+    printf("Image buffer %p", pImgBuf);
     if (pImgBuf == NULL)
     {
         eprintlf("Image buffer is NULL");
