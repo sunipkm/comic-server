@@ -30,7 +30,8 @@ int main()
         exit(0);
     }
     std::cout << "Camera: " << cam->CameraName() << "\tTemperature: " << cam->GetTemperature() << " C" << std::endl;
-    cam->SetExposure(0.02);
+    cam->SetBinningAndROI(1, 1);
+    cam->SetExposure(0.2);
     CImageData img = cam->CaptureImage(retryCount);
     if (!img.HasData())
     {
