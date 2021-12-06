@@ -188,7 +188,6 @@ void CCameraUnit_ATIK::CancelCapture()
 
 CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
 {
-    printf("Starting capture image\n");
     CriticalSection::Lock lock(criticalSection_);
     CImageData retVal;
     cancelCapture_ = false;
@@ -206,7 +205,6 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     if (exposure_ms < 1)
         exposure_ms = 1;
 
-    printf("Exposure: %d ms\n", exposure_ms);
     if (!m_initializationOK)
     {
         goto exit_err;
@@ -216,9 +214,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     {
         goto exit_err;
     }
-    printf("Exposure started\n");
     sleep_time_ms = 1000 * ArtemisExposureTimeRemaining(hCam); // sleep time in ms
-    printf("Sleep time: %d ms\n", sleep_time_ms);
     if (sleep_time_ms < 0)
         sleep_time_ms = 0;
     lock.Unlock();
@@ -226,7 +222,6 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     Sleep(sleep_time_ms);
 
     lock.Relock();
-    printf("Out of sleep\n");
     while (!(image_ready = ArtemisImageReady(hCam)))
     {
         cameraState = ArtemisGetCameraState(hCam);
@@ -236,18 +231,14 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
             status_ += std::to_string(ArtemisDownloadPercent(hCam));
             status_ += " %";
         }
-        printf("Status: %s\n", status_.c_str());
         Sleep(10);
     }
-    printf("Image ready\n");
     if (HasError(ArtemisGetImageData(hCam, &x, &y, &w, &h, &binx, &biny), __LINE__))
     {
         eprintlf("Error getting image data");
         goto exit_err;
     }
-    printf("Got image data\n");
     pImgBuf = ArtemisImageBuffer(hCam);
-    printf("Image buffer %p", pImgBuf);
     printf("%d %d %d %d %d %d\n", x, y, w, h, binx, biny);
     binningX_ = binx;
     binningY_ = biny;

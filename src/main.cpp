@@ -40,7 +40,7 @@ int main()
     unsigned char *jpg_ptr;
     int jpg_sz;
     img.GetJPEGData(jpg_ptr, jpg_sz);
-    FILE *fp = fopen("test.jpg", "wb");
+    FILE *fp = fopen("/home/pi/test.jpg", "wb");
     fwrite(jpg_ptr, 1, jpg_sz, fp);
     fclose(fp);
     exit(0);
