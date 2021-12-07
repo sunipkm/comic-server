@@ -114,6 +114,7 @@ CCameraUnit_ATIK::CCameraUnit_ATIK()
     // Now Check API / DLL versions
     int apiVersion = ArtemisAPIVersion();
     int dllVersion = ArtemisDLLVersion();
+    (void) hArtemisDLL;
     if (apiVersion != dllVersion)
     {
         eprintlf("Version do not match! API: %d DLL: %d", apiVersion, dllVersion);
