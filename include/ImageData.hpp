@@ -1,7 +1,7 @@
 #ifndef __IMAGEDATA_H__
 #define __IMAGEDATA_H__
 #include <stdlib.h>
-
+#include <stdint.h>
 #if defined(_WIN32) || defined(WIN32)
 #include <windows.h>
 #define OS_Windows
@@ -28,7 +28,6 @@ public:
 
 class CImageData
 {
-
     int m_imageHeight;
     int m_imageWidth;
 
@@ -39,13 +38,18 @@ class CImageData
 
     bool convert_jpeg;
 
+    int JpegQuality;
+    int pixelMin;
+    int pixelMax;
+    bool autoscale;
+
 public:
     float exposure;
     int bin_x, bin_y;
 
 public:
     CImageData();
-    CImageData(int imageWidth, int imageHeight, unsigned short *imageData = NULL, bool enableJpeg = false);
+    CImageData(int imageWidth, int imageHeight, unsigned short *imageData = NULL, bool enableJpeg = false, int JpegQuality = 100, int pixelMin = -1, int pixelMax = -1, bool autoscale = true);
 
     CImageData(const CImageData &rhs);
     CImageData &operator=(const CImageData &rhs);
@@ -60,6 +64,18 @@ public:
     int GetImageHeight() const { return m_imageHeight; }
 
     void GetJPEGData(unsigned char *&ptr, int &sz);
+    void SetJPEGQuality(int quality = 100)
+    {
+        JpegQuality = quality;
+        JpegQuality = JpegQuality < 0 ? 10 : JpegQuality;
+        JpegQuality = JpegQuality > 100 ? 100 : JpegQuality;
+    }
+    void SetJPEGScaling(int min = -1, int max = -1)
+    {
+        pixelMin = min;
+        pixelMax = max;
+    }
+    void SetJPEGScaling(bool autoscale);
 
     ImageStats GetStats() const;
 
@@ -72,6 +88,8 @@ public:
 
 private:
     void ConvertJPEG();
+    uint16_t DataMin();
+    uint16_t DataMax();
 };
 
 #endif // __IMAGEDATA_H__

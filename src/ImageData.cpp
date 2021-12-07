@@ -32,13 +32,13 @@ void CImageData::ClearImage()
 }
 
 CImageData::CImageData()
-    : m_imageHeight(0), m_imageWidth(0), m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
+    : m_imageHeight(0), m_imageWidth(0), m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false), JpegQuality(100), pixelMin(-1), pixelMax(-1)
 {
     // printf("Default constructor\n");
     ClearImage();
 }
 
-CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, bool enableJpeg)
+CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, bool enableJpeg, int JpegQuality, int pixelMin, int pixelMax, bool autoscale)
     : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
     // printf("Malloc constructor\n");
@@ -70,6 +70,10 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
     if (enableJpeg)
     {
         convert_jpeg = true;
+        this->JpegQuality = JpegQuality;
+        this->pixelMin = pixelMin;
+        this->pixelMax = pixelMax;
+        this->autoscale = autoscale;
         ConvertJPEG();
     }
 }
@@ -98,6 +102,10 @@ CImageData::CImageData(const CImageData &rhs)
 
     m_jpegData = rhs.m_jpegData;
     sz_jpegData = rhs.sz_jpegData;
+    JpegQuality = rhs.JpegQuality;
+    pixelMin = rhs.pixelMin;
+    pixelMax = rhs.pixelMax;
+    autoscale = rhs.autoscale;
 }
 
 CImageData &CImageData::operator=(const CImageData &rhs)
@@ -313,28 +321,77 @@ void CImageData::FlipHorizontal()
         ConvertJPEG();
 }
 
+
 #include <stdint.h>
+
+uint16_t CImageData::DataMin()
+{
+    uint16_t res = 0xffff;
+    if (!HasData())
+        return 0xffff;
+    int idx = m_imageWidth * m_imageHeight;
+    while (idx--)
+        if (res > m_imageData[idx])
+            res = m_imageData[idx];
+    return res;
+}
+
+uint16_t CImageData::DataMax()
+{
+    uint16_t res = 0;
+    if (!HasData())
+        return 0;
+    int idx = m_imageWidth * m_imageHeight;
+    while (idx--)
+        if (res < m_imageData[idx])
+            res = m_imageData[idx];
+    return res;
+}
+
 #include <stdio.h>
 
 void CImageData::ConvertJPEG()
 {
+    // Check if data exists
+    if (!HasData())
+        return;
     // source raw image
     uint16_t *imgptr = m_imageData;
     // temporary bitmap buffer
     uint8_t *data = new uint8_t[m_imageWidth * m_imageHeight * 3]; // 3 channels for RGB
+    // autoscale
+    uint16_t min, max;
+    if (autoscale)
+    {
+        min = DataMin();
+        max = DataMax();
+    }
+    else
+    {
+        min = pixelMin;
+        max = pixelMax < 0 ? 0xffff : (pixelMax > 0xffff ? 0xffff : pixelMax);
+    }
+    // scaling
+    float scale = 0xffff / ((float)(max - min));
     // Data conversion
     for (int i = 0; i < m_imageWidth * m_imageHeight; i++) // for each pixel in raw image
     {
         int idx = 3 * i;         // RGB pixel in JPEG source bitmap
-        if (imgptr[i] >= 0xffff) // saturation
+        if (imgptr[i] == 0xffff) // saturation
         {
             data[idx + 0] = 0xff;
             data[idx + 1] = 0x0;
             data[idx + 2] = 0x0;
         }
+        else if (imgptr[i] > max) // higher
+        {
+            data[idx + 0] = 0xff;
+            data[idx + 1] = 0xa5;
+            data[idx + 2] = 0x0;
+        }
         else // scaling
         {
-            uint8_t tmp = (imgptr[i]) / 0x100;
+            uint8_t tmp = (imgptr[i] - min) * scale / 0x100;
             data[idx + 0] = tmp;
             data[idx + 1] = tmp;
             data[idx + 2] = tmp;
@@ -349,7 +406,7 @@ void CImageData::ConvertJPEG()
     m_jpegData = new uint8_t[m_imageWidth * m_imageHeight * 4 + 1024]; // extra room for JPEG conversion
     // JPEG parameters
     jpge::params params;
-    params.m_quality = 100;
+    params.m_quality = JpegQuality;
     params.m_subsampling = static_cast<jpge::subsampling_t>(2); // 0 == grey, 2 == RGB
     // JPEG compression and image update
     if (!jpge::compress_image_to_jpeg_file_in_memory(m_jpegData, sz_jpegData, m_imageWidth, m_imageHeight, 3, data, params))
