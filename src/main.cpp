@@ -1,5 +1,4 @@
 #include "CameraUnit_ATIK.hpp"
-#include "jpge.hpp"
 
 #include <stdio.h>
 #include <stdlib.h>
