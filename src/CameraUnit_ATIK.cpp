@@ -114,7 +114,7 @@ CCameraUnit_ATIK::CCameraUnit_ATIK()
     // Now Check API / DLL versions
     int apiVersion = ArtemisAPIVersion();
     int dllVersion = ArtemisDLLVersion();
-    (void) hArtemisDLL;
+    (void)hArtemisDLL;
     if (apiVersion != dllVersion)
     {
         eprintlf("Version do not match! API: %d DLL: %d", apiVersion, dllVersion);
@@ -195,8 +195,7 @@ close:
 CCameraUnit_ATIK::~CCameraUnit_ATIK()
 {
     CriticalSection::Lock lock(criticalSection_);
-    while (!ArtemisDisconnect(hCam))
-        ;
+    ArtemisDisconnect(hCam);
     m_initializationOK = false;
 #ifdef _WIN32
     ArtemisUnLoadDLL();
