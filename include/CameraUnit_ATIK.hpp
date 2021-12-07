@@ -8,7 +8,7 @@
 class CCameraUnit_ATIK : public CCameraUnit
 {
     ArtemisHandle hCam;
-    ARTEMISPROPERTIES props;
+    struct ARTEMISPROPERTIES props;
 
     bool m_initializationOK;
     CriticalSection criticalSection_;
