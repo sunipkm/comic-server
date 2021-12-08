@@ -16,6 +16,7 @@
 #include "network/network_common.hpp"
 #include "network_server.hpp"
 #include "meb_print.h"
+#include "ProtQueue.hpp"
 
 /**
  * @brief Network Image Metadata
@@ -49,11 +50,12 @@ typedef enum
     TELEM     // telemetry sent to controller
 } comic_netdata;
 
-static CCameraUnit *cam = nullptr;   // Camera object
-static CImageData image;             // Image object
-static int32_t CCDTemperature;       // CCD Temperature, in 100th of degree
-static int32_t CCDTemperatureTarget; // CCD Temperature Target, in 100th of degree
-static uint64_t ExposureCadenceMs;   // Time between exposures in ms
+static CCameraUnit *cam = nullptr;     // Camera object
+static CImageData image;               // Image object
+static int32_t CCDTemperature;         // CCD Temperature, in 100th of degree
+static int32_t CCDTemperatureTarget;   // CCD Temperature Target, in 100th of degree
+static uint64_t ExposureCadenceMs;     // Time between exposures in ms
+static ProtQueue<NetFrame *> tx_queue; // Transmit queue
 
 void *CameraThread(void *_inout);
 void *ServerThread(void *_inout);

@@ -15,6 +15,11 @@
 #include "CriticalSection.hpp"
 #include <queue>
 
+/**
+ * @brief Wrapper around std::queue to ensure thread safety. Standard std::queue functions apply.
+ * 
+ * @tparam T Template type
+ */
 template <class T>
 class ProtQueue
 {
@@ -66,21 +71,16 @@ public:
         CriticalSection::Lock lock(cs_);
         q_.push(val);
     }
+    template <typename... _Args>
 #if __cplusplus > 201402L
-    template <typename... _Args>
     decltype(auto) void emplace(_Args &&...__args)
-    {
-        CriticalSection::Lock lock(cs_);
-        q_.emplace(std::forward<_Args>(__args)...);
-    }
 #else
-    template <typename... _Args>
-    void void emplace(_Args &&...__args)
+    void emplace(_Args &&...__args)
+#endif
     {
         CriticalSection::Lock lock(cs_);
         q_.emplace(std::forward<_Args>(__args)...);
     }
-#endif
     void pop()
     {
         CriticalSection::Lock lock(cs_);
