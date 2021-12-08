@@ -9,7 +9,13 @@
  * 
  */
 
+#ifndef _COMIC_SERVER_HPP_
+#define _COMIC_SERVER_HPP_
+
 #include "CameraUnit_ATIK.hpp"
+#include "network/network_common.hpp"
+#include "network_server.hpp"
+#include "meb_print.h"
 
 /**
  * @brief Network Image Metadata
@@ -23,10 +29,18 @@ typedef struct __attribute__((packed))
     int32_t temperature;
     uint32_t exposure_ms;
     uint64_t tstamp;
+    int32_t type;
     int32_t size;
 } netimg_meta;
 
-static CCameraUnit *cam = nullptr; // Camera object
+typedef enum
+{
+    JPEGMONO = 15,
+    JPEGRGBA = 20,
+    JPEGRGB = 25,
+    RAW8 = 30,
+    RAW16 = 35
+} netimg_type;
 
 typedef enum
 {
@@ -35,9 +49,21 @@ typedef enum
     TELEM     // telemetry sent to controller
 } comic_netdata;
 
+static CCameraUnit *cam = nullptr;   // Camera object
+static CImageData image;             // Image object
+static int32_t CCDTemperature;       // CCD Temperature, in 100th of degree
+static int32_t CCDTemperatureTarget; // CCD Temperature Target, in 100th of degree
+static uint64_t ExposureCadenceMs;   // Time between exposures in ms
+
+void *CameraThread(void *_inout);
+void *ServerThread(void *_inout);
+void *CoolerThread(void *_inout);
+
 #include <chrono>
 
 static inline uint64_t getTime()
 {
     return ((std::chrono::duration_cast<std::chrono::milliseconds>((std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now())).time_since_epoch())).count());
 }
+
+#endif // _COMIC_SERVER_HPP_

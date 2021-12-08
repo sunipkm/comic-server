@@ -6,9 +6,10 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include <iostream>
 #include <queue>
 
-#include "CameraUnit_ATIK.hpp"
+#include "comic-server.hpp"
 
 volatile sig_atomic_t done = 0;
 void sig_handler(int sig)
@@ -46,7 +47,6 @@ int main(int argc, char *argv[])
     signal(SIGSEGV, sig_handler);
     signal(SIGTERM, sig_handler);
 
-    CCameraUnit *cam = nullptr;
     long retryCount = 10;
     do
     {
@@ -83,4 +83,51 @@ int main(int argc, char *argv[])
     fwrite(jpg_ptr, 1, jpg_sz, fp);
     fclose(fp);
     exit(0);
+}
+
+void *CameraThread(void *_inout)
+{
+    while (!done && cam->CameraReady())
+    {
+        long retrycount = 1;
+        uint64_t start = getTime();
+        image = cam->CaptureImage(retrycount);
+        if (image.HasData())
+        {
+            uint8_t *jpg_ptr = nullptr;
+            int jpg_sz;
+            image.GetJPEGData(jpg_ptr, jpg_sz);
+            if (jpg_sz <= 0 || jpg_ptr == nullptr)
+            {
+                dbprintlf("Invalid JPEG image");
+            }
+            else
+            {
+                netimg_meta metadata[1];
+                metadata->exposure_ms = cam->GetExposure() * 1000; // exposure in ms
+                metadata->width = image.GetImageWidth();
+                metadata->height = image.GetImageHeight();
+                metadata->tstamp = getTime();
+                metadata->size = jpg_sz;
+                metadata->type = netimg_type::JPEGRGB;
+                uint8_t *buf = new uint8_t[sizeof(netimg_meta) + jpg_sz];
+                memcpy(buf, metadata, sizeof(netimg_meta));
+                memcpy(buf + sizeof(netimg_meta), jpg_ptr, jpg_sz);
+                NetFrame *frame = nullptr;
+                frame = new NetFrame(buf, sizeof(netimg_meta) + jpg_sz, comic_netdata::DATA, NetType::DATA, FrameStatus::NONE, 0);
+                // queue the netframe
+                delete(buf);
+            }
+        }
+        uint64_t end = getTime();
+        if ((end - start) < ExposureCadenceMs)
+        {
+            usleep((ExposureCadenceMs - (end - start)) * 1000);
+        }
+        else
+        {
+            usleep(10 * 1000);
+        }
+    }
+    return (void *)1;
 }
