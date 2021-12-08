@@ -27,3 +27,17 @@ typedef struct __attribute__((packed))
 } netimg_meta;
 
 static CCameraUnit *cam = nullptr; // Camera object
+
+typedef enum
+{
+    CMD = 20, // command from controller
+    DATA,     // data sent to controller
+    TELEM     // telemetry sent to controller
+} comic_netdata;
+
+#include <chrono>
+
+static inline uint64_t getTime()
+{
+    return ((std::chrono::duration_cast<std::chrono::milliseconds>((std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now())).time_since_epoch())).count());
+}
