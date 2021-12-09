@@ -4,14 +4,14 @@
 #include <algorithm>
 #if !defined(OS_Windows)
 #include <string.h>
-#endif
-#include "jpge.hpp"
-
+#else
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+#endif
+#include "jpge.hpp"
 
 void CImageData::ClearImage()
 {
