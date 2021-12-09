@@ -114,8 +114,8 @@ void *CameraThread(void *_inout)
                 memcpy(buf, metadata, sizeof(netimg_meta));
                 memcpy(buf + sizeof(netimg_meta), jpg_ptr, jpg_sz);
                 NetFrame *frame = nullptr;
-                frame = new NetFrame(buf, sizeof(netimg_meta) + jpg_sz, comic_netdata::DATA, NetType::DATA, FrameStatus::NONE, 0);
-                // queue the netframe
+                frame = new NetFrame(buf, sizeof(netimg_meta) + jpg_sz, comic_netdata::DATA, NetType::DATA, FrameStatus::NONE, CtrlVertex);
+                tx_queue.push(frame);
                 delete(buf);
             }
         }

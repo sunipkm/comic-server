@@ -1,6 +1,6 @@
 CXX = g++
 
-EDCXXFLAGS:= -Wall -O2 -std=c++11 -I drivers/ -I include/ $(CXXFLAGS)
+EDCXXFLAGS:= -Wall -O2 -std=c++11 -I drivers/ -I include/ $(CXXFLAGS) -DDEFINE_WEAK
 EDLDFLAGS:= $(LDFLAGS)
 
 ifeq ($(OS),Windows_NT)

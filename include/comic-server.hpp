@@ -1,12 +1,12 @@
 /**
  * @file comic-server.hpp
  * @author Sunip K. Mukherjee (sunipkmukherjee@gmail.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2021-12-07
- * 
+ *
  * @copyright Copyright (c) 2021
- * 
+ *
  */
 
 #ifndef _COMIC_SERVER_HPP_
@@ -20,8 +20,8 @@
 
 /**
  * @brief Network Image Metadata
- * 
- * @return typedef struct 
+ *
+ * @return typedef struct
  */
 typedef struct __attribute__((packed))
 {
@@ -50,12 +50,13 @@ typedef enum
     TELEM     // telemetry sent to controller
 } comic_netdata;
 
-static CCameraUnit *cam = nullptr;     // Camera object
-static CImageData image;               // Image object
-static int32_t CCDTemperature;         // CCD Temperature, in 100th of degree
-static int32_t CCDTemperatureTarget;   // CCD Temperature Target, in 100th of degree
-static uint64_t ExposureCadenceMs;     // Time between exposures in ms
-static ProtQueue<NetFrame *> tx_queue; // Transmit queue
+static CCameraUnit *cam = nullptr;           // Camera object
+static CImageData image;                     // Image object
+static int32_t CCDTemperature;               // CCD Temperature, in 100th of degree
+static int32_t CCDTemperatureTarget = -3000; // CCD Temperature Target, in 100th of degree
+static uint64_t ExposureCadenceMs = 1000;    // Time between exposures in ms
+static ProtQueue<NetFrame *> tx_queue;       // Transmit queue
+static NetVertex CtrlVertex;                 // Controller netvertex
 
 void *CameraThread(void *_inout);
 void *ServerThread(void *_inout);
