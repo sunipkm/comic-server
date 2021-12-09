@@ -81,9 +81,16 @@ typedef struct __attribute__((packed))
 
 typedef enum
 {
+    SAVE_ERR_DIR_PATH_NOT_FOUND
+} netcmd_err;
+
+typedef enum
+{
     CMD = 40, // command from controller
     DATA,     // data sent to controller
-    TELEM     // telemetry sent to controller
+    TELEM,    // telemetry sent to controller
+    INFO,     // info sent to controller
+    ERR       // Error info sent to controller
 } comic_netdata;
 
 typedef struct
@@ -142,12 +149,48 @@ static int32_t CCDTemperature;               // CCD Temperature, in 100th of deg
 static int32_t CCDTemperatureTarget = -3000; // CCD Temperature Target, in 100th of degree
 static uint64_t ExposureCadenceMs = 1000;    // Time between exposures in ms
 static uint64_t SaveCadenceMs = 5000;        // Time between saves
+static int32_t SaveImageNum = 0;             // 0 for continuous exposure save, > 0 for saving number of exposures, < 0 for no save
+static int32_t CurrentSaveImageNum = 0;      // Currently saving index
+static bool SaveImageCommand = false;        // Save image is false by default
+static char SaveImagePrefix[20] = "comic";   // Default file name prefix
+static char SaveImageDir[256] = "./fits/";   // Default save directory
+static char DirPathErrorName[256];           // Error finding directory name
 static ProtQueue<NetFrame *> tx_queue;       // Transmit queue
 static NetVertex CtrlVertex;                 // Controller netvertex
 static raw_image MainImage[1];               // Image data
 
+/**
+ * @brief This thread operates the camera to collect exposures.
+ * Also sends collected exposures to the controller over the network,
+ * and saves the collected exposures as instructed.
+ * 
+ * @param _inout Unused.
+ * @return void* 
+ */
 void *CameraThread(void *_inout);
-void *ServerThread(void *_inout);
+/**
+ * @brief This thread receives data from the controller and parses
+ * the data in form of commands.
+ * 
+ * @param _inout 
+ * @return void* 0
+ */
+void *ServerRxThread(void *_inout);
+/**
+ * @brief This thread transmits data from the camera system to the
+ * controller.
+ * 
+ * @param _inout 
+ * @return void* 0
+ */
+void *ServerTxThread(void *_inout);
+/**
+ * @brief This thread controls the thermoelectric cooler external
+ * to the camera.
+ * 
+ * @param _inout Unused.
+ * @return void* 0
+ */
 void *CoolerThread(void *_inout);
 
 #ifndef OS_Windows
@@ -187,7 +230,7 @@ bool dirExists(const char *dirName);
  * @param _permissions Pointer to mode_t permissions, NULL for default (0777)
  * @return int 1 on success, 0 on error
  */
-int CreateDirectoryA(const char *path, unsigned int * _permissions);
+int CreateDirectoryA(const char *path, unsigned int *_permissions);
 /**
  * @brief Get the error from CreateDirectoryA function.
  * 

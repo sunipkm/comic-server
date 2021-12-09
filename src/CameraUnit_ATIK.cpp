@@ -315,7 +315,6 @@ double CCameraUnit_ATIK::GetTemperature() const
     return retVal;
 }
 
-//
 void CCameraUnit_ATIK::SetBinningAndROI(int binX, int binY, int x_min, int x_max, int y_min, int y_max)
 {
     if (!m_initializationOK)

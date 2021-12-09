@@ -87,11 +87,18 @@ int main(int argc, char *argv[])
 
 void *CameraThread(void *_inout)
 {
+    static int64_t SaveCadenceMs_ = SaveCadenceMs;
     while (!done && cam->CameraReady())
     {
         long retrycount = 1;
         uint64_t start = getTime();
         float exposure = cam->GetExposure();
+        int x_min = cam->GetROI()->x_min;
+        int y_min = cam->GetROI()->y_min;
+        int x_max = cam->GetROI()->x_max;
+        int y_max = cam->GetROI()->y_max;
+        int binX = cam->GetBinningX();
+        int binY = cam->GetBinningY();
         image = cam->CaptureImage(retrycount);
         if (image.HasData())
         {
@@ -115,6 +122,7 @@ void *CameraThread(void *_inout)
                 memcpy(buf, metadata, sizeof(netimg_meta));
                 memcpy(buf + sizeof(netimg_meta), jpg_ptr, jpg_sz);
                 NetFrame *frame = nullptr;
+                // Send controller this frame
                 frame = new NetFrame(buf, sizeof(netimg_meta) + jpg_sz, comic_netdata::DATA, NetType::DATA, FrameStatus::NONE, CtrlVertex);
                 tx_queue.push(frame);
                 delete (buf);
@@ -126,18 +134,124 @@ void *CameraThread(void *_inout)
             MainImage->height = image.GetImageHeight();
             MainImage->width = image.GetImageWidth();
             MainImage->exposure_ms = image.GetImageExposure() * 1000;
+            MainImage->tstamp = start;
+            MainImage->x_max = x_max;
+            MainImage->x_min = x_min;
+            MainImage->y_max = y_max;
+            MainImage->y_min = y_min;
+            MainImage->binX = binX;
+            MainImage->binY = binY;
+            MainImage->data_avail = true;
+            MainImage->new_data = true;
+            lock.Unlock();
         }
         uint64_t end = getTime();
         if ((end - start) < ExposureCadenceMs)
         {
-            usleep((ExposureCadenceMs - (end - start)) * 1000);
+            uint64_t ExposureCadenceMs_ = ExposureCadenceMs - (end - start);
+            while (ExposureCadenceMs_)
+            {
+                usleep(1000000); // 1000 ms, 1 Hz
+                ExposureCadenceMs_ -= 1000;
+                SaveCadenceMs_ -= 1000;
+                // TODO: Let controller know time to next save (INFO)
+            }
         }
         else
         {
             usleep(10 * 1000);
         }
+        if (SaveCadenceMs_ <= 0)
+        {
+            SaveCadenceMs_ = SaveCadenceMs;
+            // Save Image Here
+            if (SaveImageCommand)
+            {
+                if (!dirExists(SaveImageDir))
+                {
+                    int mkDir_ret = CreateDirectoryA(SaveImageDir, NULL);
+                    if (mkDir_ret == 0)
+                    {
+                        mkDir_ret = GetLastError();
+                        if (mkDir_ret == ERROR_ALREADY_EXISTS)
+                        {
+                            printf("Directory %s already exists\n", SaveImageDir);
+                        }
+                        else if (mkDir_ret == ERROR_PATH_NOT_FOUND)
+                        {
+                            strcpy(DirPathErrorName, SaveImageDir);
+                            // TODO: Let controller know of path not found (ERR)
+                        }
+                    }
+                }
+                if (CurrentSaveImageNum < SaveImageNum)
+                {
+                    CriticalSection::Lock lock(MainImage->cs);
+                    SaveFits(SaveImagePrefix, SaveImageDir, CurrentSaveImageNum, SaveImageNum, MainImage);
+                    CurrentSaveImageNum++;
+                }
+                else if ((CurrentSaveImageNum == SaveImageNum) && (SaveImageNum != 0))
+                {
+                    SaveImageCommand = false;
+                    CurrentSaveImageNum = 0;
+                    SaveImageNum = 0;
+                    // TODO: Let controller know save is complete (INFO)
+                }
+                else if (SaveImageNum == 0) // continuous exposure mode only
+                {
+                    char SaveImageDir_[256];
+#ifdef OS_Windows
+                    SYSTEMTIME currDate = {0};
+                    GetLocalTime(&currDate);
+                    snprintf(SaveImageDir_, sizeof(SaveImageDir_), "%s\\%04d%02d%02d", SaveImageDir, currDate.wYear, currDate.wMonth, currDate.wDay);
+#else
+                    time_t t = time(NULL);
+                    struct tm tm = *localtime(&t);
+                    _snprintf(SaveImageDir_, sizeof(SaveImageDir_), "%s/%04d%02d%02d", SaveImageDir, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+#endif
+                    if (!dirExists(SaveImageDir_))
+                    {
+                        int mkDir_ret = CreateDirectoryA(SaveImageDir_, NULL);
+                        if (mkDir_ret == 0)
+                        {
+                            mkDir_ret = GetLastError();
+                            if (mkDir_ret == ERROR_ALREADY_EXISTS)
+                            {
+                                printf("Directory %s already exists\n", SaveImageDir);
+                            }
+                            else if (mkDir_ret == ERROR_PATH_NOT_FOUND)
+                            {
+                                strcpy(DirPathErrorName, SaveImageDir);
+                                // TODO: Let controller know of path not found (ERR)
+                            }
+                        }
+                    }
+                    CriticalSection::Lock lock(MainImage->cs);
+                    SaveFits(SaveImagePrefix, SaveImageDir_, 0, 0, MainImage);
+                    // TODO: Let controller know image was saved (INFO)
+                }
+            }
+        }
     }
     return (void *)1;
+}
+
+#include <BesselFilter.hpp>
+
+#define TEMPERATURE_BUF_SIZE 64
+
+void *CoolerThread(void *_inout)
+{
+    bool start = true;
+    RingBuf<double> temp_buf(TEMPERATURE_BUF_SIZE);
+    RingBuf<double> temp_grad_buf(TEMPERATURE_BUF_SIZE);
+    BesselFilter<double> filter_bessel(TEMPERATURE_BUF_SIZE);
+    float dutycycle = 100;
+    while (!done)
+    {
+        temp_buf.push(cam->GetTemperature()); // in 100th of degree
+        temp_buf[0] = filter_bessel.ApplyFilter(temp_buf); // apply bessel filter on data
+    }
 }
 
 void SaveFits(char *filePrefix, char *DirPrefix, int i, int n, raw_image *image)
@@ -223,12 +337,12 @@ bool dirExists(const char *dirName)
 #include <errno.h>
 #define ERROR_ALREADY_EXISTS EEXIST
 #define ERROR_PATH_NOT_FOUND 6557
-int CreateDirectoryA(const char *path, unsigned int * _permissions)
+int CreateDirectoryA(const char *path, unsigned int *_permissions)
 {
     mode_t perm = 0777;
     if (_permissions != NULL)
         perm = *_permissions;
-    
+
     if (mkdir(path, perm) == 0)
         return 1;
     else
