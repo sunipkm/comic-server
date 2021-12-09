@@ -105,7 +105,7 @@ void *CameraThread(void *_inout)
             else
             {
                 netimg_meta metadata[1];
-                metadata->exposure_ms = cam->GetExposure() * 1000; // exposure in ms
+                metadata->exposure_ms = image.GetImageExposure() * 1000; // exposure in ms
                 metadata->width = image.GetImageWidth();
                 metadata->height = image.GetImageHeight();
                 metadata->tstamp = getTime();
