@@ -1,7 +1,7 @@
 CXX = g++
 
-EDCXXFLAGS:= -Wall -O2 -std=c++11 -I drivers/ -I include/ $(CXXFLAGS) -DDEFINE_WEAK
-EDLDFLAGS:= $(LDFLAGS)
+EDCXXFLAGS:= -Wall -O2 -std=c++11 -I drivers/ -I include/ -I network/ $(CXXFLAGS) -DDEFINE_WEAK
+EDLDFLAGS:= -lpthread -lcfitsio$(LDFLAGS)
 
 ifeq ($(OS),Windows_NT)
     CCFLAGS += -D WIN32

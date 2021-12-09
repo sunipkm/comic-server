@@ -1,5 +1,5 @@
-#ifndef __CAMERAUNIT_H__
-#define __CAMERAUNIT_H__
+#ifndef __CAMERAUNIT_HPP__
+#define __CAMERAUNIT_HPP__
 
 #include "ImageData.hpp"
 #include <string>
@@ -48,4 +48,4 @@ public:
     virtual int GetCCDHeight() const = 0;
 };
 
-#endif // __CAMERAUNIT_H__
+#endif // __CAMERAUNIT_HPP__

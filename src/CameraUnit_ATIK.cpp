@@ -228,6 +228,8 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     int cameraState = 0;
 
     int exposure_ms = exposure_ * 1000;
+
+    float exposure_now = exposure_;
     if (exposure_ms < 1)
         exposure_ms = 1;
 
@@ -276,6 +278,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
         goto exit_err;
     }
     memcpy(retVal.GetImageData(), pImgBuf, w * h * 2);
+    retVal.SetImageExposure(exposure_now);
 exit_err:
     // printf("Exiting capture\n");
     return retVal;

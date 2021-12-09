@@ -32,13 +32,13 @@ void CImageData::ClearImage()
 }
 
 CImageData::CImageData()
-    : m_imageHeight(0), m_imageWidth(0), m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false), JpegQuality(100), pixelMin(-1), pixelMax(-1)
+    : m_imageHeight(0), m_imageWidth(0), m_exposureTime(0), m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false), JpegQuality(100), pixelMin(-1), pixelMax(-1)
 {
     // printf("Default constructor\n");
     ClearImage();
 }
 
-CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, bool enableJpeg, int JpegQuality, int pixelMin, int pixelMax, bool autoscale)
+CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, float exposureTime, bool enableJpeg, int JpegQuality, int pixelMin, int pixelMax, bool autoscale)
     : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
     // printf("Malloc constructor\n");
@@ -66,6 +66,7 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
     }
     m_imageWidth = imageWidth;
     m_imageHeight = imageHeight;
+    m_exposureTime = exposureTime;
 
     if (enableJpeg)
     {
@@ -99,6 +100,7 @@ CImageData::CImageData(const CImageData &rhs)
     memcpy(m_imageData, rhs.m_imageData, rhs.m_imageWidth * rhs.m_imageHeight * sizeof(unsigned short));
     m_imageWidth = rhs.m_imageWidth;
     m_imageHeight = rhs.m_imageHeight;
+    m_exposureTime = rhs.m_exposureTime;
 
     m_jpegData = rhs.m_jpegData;
     sz_jpegData = rhs.sz_jpegData;
@@ -253,6 +255,8 @@ void CImageData::Add(const CImageData &rhs)
         targetPixelPtr++;
     }
 
+    m_exposureTime += rhs.m_exposureTime;
+
     if (convert_jpeg)
         ConvertJPEG();
 }
@@ -320,7 +324,6 @@ void CImageData::FlipHorizontal()
     if (convert_jpeg)
         ConvertJPEG();
 }
-
 
 #include <stdint.h>
 
