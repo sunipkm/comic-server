@@ -21,12 +21,6 @@ template <class T>
  */
 class RingBuf
 {
-private:
-    T *data;
-    int idx;
-    bool full;
-    int size;
-
 public:
     /**
      * @brief Construct a new empty ring buffer.
@@ -35,6 +29,7 @@ public:
     RingBuf() : data(nullptr), idx(0), full(false), size(0)
     {
     }
+
     /**
      * @brief Construct a new ring buffer.
      * 
@@ -43,8 +38,9 @@ public:
     RingBuf(int size) : data(nullptr), idx(0), full(false)
     {
         this->size = size;
-        Initialize();
+        Initialize(size);
     }
+
     /**
      * @brief Destroy the ring buffer.
      * 
@@ -54,6 +50,7 @@ public:
         if (HasData())
             delete[] data;
     }
+
     /**
      * @brief Initialize an empty ring buffer.
      * 
@@ -73,12 +70,14 @@ public:
         for (int i = 0; i < size; i++)
             data[i] = 0;
     }
+
     /**
      * @brief Check if ring buffer has been initialized.
      * 
      * @return bool 
      */
     bool HasData() const { return size > 0; }
+
     /**
      * @brief Check if ring buffer is full.
      * Ring buffer is considered full if number of elements 
@@ -87,12 +86,14 @@ public:
      * @return bool
      */
     bool IsFull() const { return full; }
+
     /**
      * @brief Get the index at data was pushed in last.
      * 
      * @return int Current index of ring buffer.
      */
     int GetIndex() const { return idx; }
+
     /**
      * @brief Get data at index i relative to the current index.
      * i = 0 returns the element at current index.
@@ -118,6 +119,30 @@ public:
         int index = size - i + idx;
         return data[index];
     }
+    
+    /**
+     * @brief Get data at the absolute index i
+     * 
+     * @param i Absolute array index
+     * @return T& Reference to the element at the absolute index i
+     */
+    T& at(int i)
+    {
+        if (!HasData())
+        {
+            throw std::invalid_argument("Buffer not initialized.");
+        }
+        if (i < 0)
+        {
+            throw std::invalid_argument("Index can not be negative.");
+        }
+        if (i >= size)
+        {
+            throw std::invalid_argument("Index > size, invalid.")
+        }
+        return data[i];
+    }
+
     /**
      * @brief Push data into the ring buffer.
      * This process iterates the index.
@@ -133,8 +158,9 @@ public:
         if (idx == size - 1)
             full = true;
         idx = (idx + 1) % size;
-        (*this)[idx] = data;
+        (this->data)[idx] = data;
     }
+
     /**
      * @brief Clear data in the ring buffer.
      * 
@@ -150,12 +176,19 @@ public:
         for (int i = 0; i < size; i++)
             data[i] = 0;
     }
+
     /**
      * @brief Get the size of the ring buffer
      * 
      * @return const int 
      */
-    const int GetSize() const {return size;}
+    const int GetSize() const { return size; }
+
+private:
+    T *data;
+    int idx;
+    bool full;
+    int size;
 };
 
 #endif // _RING_BUF_HPP_

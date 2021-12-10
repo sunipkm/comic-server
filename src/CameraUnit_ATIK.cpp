@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <mutex>
 
 #if !defined(OS_Windows)
 #include <unistd.h>
@@ -194,7 +195,8 @@ close:
 
 CCameraUnit_ATIK::~CCameraUnit_ATIK()
 {
-    CriticalSection::Lock lock(criticalSection_);
+    // CriticalSection::Lock lock(criticalSection_);
+    std::lock_guard<std::mutex> lock(cs_);
     ArtemisDisconnect(hCam);
     m_initializationOK = false;
 #ifdef _WIN32
@@ -204,7 +206,8 @@ CCameraUnit_ATIK::~CCameraUnit_ATIK()
 
 void CCameraUnit_ATIK::CancelCapture()
 {
-    CriticalSection::Lock lock(criticalSection_);
+    // CriticalSection::Lock lock(criticalSection_);
+    std::lock_guard<std::mutex> lock(cs_);
     cancelCapture_ = true;
     // abort acquisition
     ArtemisAbortExposure(hCam);
@@ -214,7 +217,8 @@ void CCameraUnit_ATIK::CancelCapture()
 
 CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
 {
-    CriticalSection::Lock lock(criticalSection_);
+    // CriticalSection::Lock lock(criticalSection_);
+    std::unique_lock<std::mutex> lock(cs_);
     CImageData retVal;
     cancelCapture_ = false;
     BOOL image_ready;
@@ -245,11 +249,13 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     sleep_time_ms = 1000 * ArtemisExposureTimeRemaining(hCam); // sleep time in ms
     if (sleep_time_ms < 0)
         sleep_time_ms = 0;
-    lock.Unlock();
+    // lock.Unlock();
+    lock.unlock();
 
     Sleep(sleep_time_ms);
 
-    lock.Relock();
+    // lock.Relock();
+    lock.lock();
     while (!(image_ready = ArtemisImageReady(hCam)))
     {
         cameraState = ArtemisGetCameraState(hCam);
@@ -322,7 +328,8 @@ void CCameraUnit_ATIK::SetBinningAndROI(int binX, int binY, int x_min, int x_max
         return;
     }
 
-    CriticalSection::Lock lock(criticalSection_);
+    // CriticalSection::Lock lock(criticalSection_);
+    std::lock_guard<std::mutex> lock(cs_);
     if (!m_initializationOK)
     {
         return;
@@ -457,7 +464,8 @@ void CCameraUnit_ATIK::SetExposure(float exposureInSeconds)
 
     if (maxexposurems > 10 * 60 * 1000) // max exposure 10 minutes
         maxexposurems = 10 * 60 * 1000;
-    CriticalSection::Lock lock(criticalSection_);
+    // CriticalSection::Lock lock(criticalSection_);
+    std::lock_guard<std::mutex> lock(cs_);
     exposure_ = maxexposurems * 0.001; // 1 ms increments only
 }
 

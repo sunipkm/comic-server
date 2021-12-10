@@ -4,6 +4,7 @@
 #include "CameraUnit.hpp"
 #include "CriticalSection.hpp"
 #include "AtikCameras.h"
+#include <mutex>
 
 class CCameraUnit_ATIK : public CCameraUnit
 {
@@ -11,10 +12,10 @@ class CCameraUnit_ATIK : public CCameraUnit
     struct ARTEMISPROPERTIES props;
 
     bool m_initializationOK;
-    CriticalSection criticalSection_;
+    // CriticalSection criticalSection_;
+    std::mutex cs_;
     bool cancelCapture_;
     std::string status_;
-    CriticalSection statusCriticalSection_;
 
     bool hasshutter;
 

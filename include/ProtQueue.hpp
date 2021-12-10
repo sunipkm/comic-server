@@ -12,7 +12,7 @@
 #ifndef _PROT_QUEUE_HPP_
 #define _PROT_QUEUE_HPP_
 
-#include "CriticalSection.hpp"
+#include <mutex>
 #include <queue>
 
 /**
@@ -25,7 +25,7 @@ class ProtQueue
 {
 private:
     std::queue<T> q_;
-    CriticalSection cs_;
+    std::mutex cs_;
 
 public:
     ProtQueue()
@@ -43,32 +43,33 @@ public:
     }
     bool empty()
     {
-        CriticalSection::Lock lock(cs_);
+        std::lock_guard<std::mutex> lock(cs_);
         return q_.empty();
+        
     }
     size_t size()
     {
-        CriticalSection::Lock lock(cs_);
+        std::lock_guard<std::mutex> lock(cs_);
         return q_.size();
     }
     const T &front() const
     {
-        CriticalSection::Lock lock(cs_);
+        std::lock_guard<std::mutex> lock(cs_);
         return q_.front();
     }
     const T &back() const
     {
-        CriticalSection::Lock lock(cs_);
+        std::lock_guard<std::mutex> lock(cs_);
         return q_.back();
     }
     void push(const T &val)
     {
-        CriticalSection::Lock lock(cs_);
+        std::lock_guard<std::mutex> lock(cs_);
         q_.push(val);
     }
     void push(T &&val)
     {
-        CriticalSection::Lock lock(cs_);
+        std::lock_guard<std::mutex> lock(cs_);
         q_.push(val);
     }
     template <typename... _Args>
@@ -78,18 +79,19 @@ public:
     void emplace(_Args &&...__args)
 #endif
     {
-        CriticalSection::Lock lock(cs_);
+        std::lock_guard<std::mutex> lock(cs_);
         q_.emplace(std::forward<_Args>(__args)...);
     }
     void pop()
     {
-        CriticalSection::Lock lock(cs_);
+        std::lock_guard<std::mutex> lock(cs_);
         q_.pop();
     }
     void swap(ProtQueue &x) noexcept
     {
-        CriticalSection::Lock lock(cs_);
-        CriticalSection::Lock lock2(x.cs_);
+        std::unique_lock<std::mutex> l1(cs_, std::defer_lock);
+        std::unique_lock<std::mutex> l2(x.cs_, std::defer_lock);
+        std::lock(l1, l2);
         this->swap(x);
     }
 };

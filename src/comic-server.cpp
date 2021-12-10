@@ -199,7 +199,7 @@ void *CameraThread(void *_inout)
                 }
                 else if (SaveImageNum == 0) // continuous exposure mode only
                 {
-                    char SaveImageDir_[256];
+                    char SaveImageDir_[512];
 #ifdef OS_Windows
                     SYSTEMTIME currDate = {0};
                     GetLocalTime(&currDate);
