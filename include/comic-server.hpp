@@ -95,7 +95,7 @@ typedef enum
 
 typedef struct
 {
-    CriticalSection cs;
+    std::mutex cs;
 
     uint64_t tstamp;
     uint32_t exposure_ms;
@@ -115,7 +115,7 @@ typedef struct
 
     void Init()
     {
-        CriticalSection::Lock lock(cs);
+        std::lock_guard<std::mutex> lock(cs);
         tstamp = 0;
         exposure_ms = 0;
         binX = 0;
@@ -135,14 +135,14 @@ typedef struct
 
     void Reset()
     {
-        CriticalSection::Lock lock(cs);
+        std::lock_guard<std::mutex> lock(cs);
         if (data)
             delete[] data;
         Init();
     };
 } raw_image;
 
-static CriticalSection capturelock;          // This mutex is locked when image capture is ongoing
+static std::mutex capturelock;               // This mutex is locked when image capture is ongoing
 static CCameraUnit *cam = nullptr;           // Camera object
 static CImageData image;                     // Image object
 static int32_t CCDTemperature;               // CCD Temperature, in 100th of degree

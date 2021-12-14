@@ -128,7 +128,7 @@ void *CameraThread(void *_inout)
                 delete (buf);
             }
             MainImage->Reset();
-            CriticalSection::Lock lock(MainImage->cs);
+            std::lock_guard<std::mutex> lock(MainImage->cs);
             MainImage->size = image.GetImageHeight() * image.GetImageWidth() * sizeof(uint16_t);
             MainImage->data = new uint16_t[MainImage->size];
             MainImage->height = image.GetImageHeight();
@@ -143,7 +143,6 @@ void *CameraThread(void *_inout)
             MainImage->binY = binY;
             MainImage->data_avail = true;
             MainImage->new_data = true;
-            lock.Unlock();
         }
         uint64_t end = getTime();
         if ((end - start) < ExposureCadenceMs)
@@ -186,7 +185,7 @@ void *CameraThread(void *_inout)
                 }
                 if (CurrentSaveImageNum < SaveImageNum)
                 {
-                    CriticalSection::Lock lock(MainImage->cs);
+                    std::lock_guard<std::mutex> lock(MainImage->cs);
                     SaveFits(SaveImagePrefix, SaveImageDir, CurrentSaveImageNum, SaveImageNum, MainImage);
                     CurrentSaveImageNum++;
                 }
@@ -226,7 +225,7 @@ void *CameraThread(void *_inout)
                             }
                         }
                     }
-                    CriticalSection::Lock lock(MainImage->cs);
+                    std::lock_guard<std::mutex> lock(MainImage->cs);
                     SaveFits(SaveImagePrefix, SaveImageDir_, 0, 0, MainImage);
                     // TODO: Let controller know image was saved (INFO)
                 }

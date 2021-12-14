@@ -16,7 +16,9 @@
 
 template <class T>
 /**
- * @brief Ring buffer class for any data of numeric type.
+ * @brief Ring buffer class for any data of numeric type. The ring buffer is not
+ * internally MT-safe. The reason behind the design choice being, ring buffer
+ * access may be time-critical and thread safety may be specific to the use-case.
  * 
  */
 class RingBuf
@@ -69,6 +71,7 @@ public:
         data = new T[size];
         for (int i = 0; i < size; i++)
             data[i] = 0;
+        pushed = 0;
     }
 
     /**
@@ -119,14 +122,14 @@ public:
         int index = size - i + idx;
         return data[index];
     }
-    
+
     /**
      * @brief Get data at the absolute index i
      * 
      * @param i Absolute array index
      * @return T& Reference to the element at the absolute index i
      */
-    T& at(int i)
+    T &at(int i)
     {
         if (!HasData())
         {
@@ -138,7 +141,7 @@ public:
         }
         if (i >= size)
         {
-            throw std::invalid_argument("Index > size, invalid.")
+            throw std::invalid_argument("Index > size, invalid.");
         }
         return data[i];
     }
@@ -159,6 +162,7 @@ public:
             full = true;
         idx = (idx + 1) % size;
         (this->data)[idx] = data;
+        pushed++;
     }
 
     /**
@@ -175,7 +179,15 @@ public:
         full = false;
         for (int i = 0; i < size; i++)
             data[i] = 0;
+        pushed = 0;
     }
+
+    /**
+     * @brief Get the total number of elements pushed into the array
+     * 
+     * @return const int Number of elements pushed into the ring buffer
+     */
+    const int GetPushed() const { return pushed; }
 
     /**
      * @brief Get the size of the ring buffer
@@ -189,6 +201,7 @@ private:
     int idx;
     bool full;
     int size;
+    int pushed;
 };
 
 #endif // _RING_BUF_HPP_

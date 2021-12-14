@@ -2,7 +2,6 @@
 #define __CAMERAUNIT_ATIK_HPP__
 
 #include "CameraUnit.hpp"
-#include "CriticalSection.hpp"
 #include "AtikCameras.h"
 #include <mutex>
 
