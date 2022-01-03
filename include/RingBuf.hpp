@@ -13,7 +13,6 @@
 #define _RING_BUF_HPP_
 
 #include <stdexcept>
-#include <stdio.h>
 
 template <class T>
 /**

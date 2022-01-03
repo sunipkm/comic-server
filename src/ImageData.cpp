@@ -1,21 +1,30 @@
+/**
+ * @file ImageData.cpp
+ * @author Sunip K. Mukherjee (sunipkmukherjee@gmail.com)
+ * @brief Image Data Storage Methods Implementation
+ * @version 0.1
+ * @date 2022-01-03
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include "ImageData.hpp"
 
 #include <math.h>
 #include <algorithm>
 #if !defined(OS_Windows)
 #include <string.h>
-#endif
-#include "jpge.hpp"
-
+#else
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+#endif
+#include "jpge.hpp"
 
 void CImageData::ClearImage()
 {
-    // printf("ClearImage: %p, %d, %d\n", m_imageData, m_imageWidth, m_imageHeight);
     if (m_imageData != 0)
         delete[] m_imageData;
     m_imageData = 0;
@@ -28,20 +37,17 @@ void CImageData::ClearImage()
         delete[] m_jpegData;
         m_jpegData = nullptr;
     }
-    // printf("ClearImage: %p, %d, %d\n", m_imageData, m_imageWidth, m_imageHeight);
 }
 
 CImageData::CImageData()
-    : m_imageHeight(0), m_imageWidth(0), m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false), JpegQuality(100), pixelMin(-1), pixelMax(-1)
+    : m_imageHeight(0), m_imageWidth(0), m_exposureTime(0), m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false), JpegQuality(100), pixelMin(-1), pixelMax(-1)
 {
-    // printf("Default constructor\n");
     ClearImage();
 }
 
-CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, bool enableJpeg, int JpegQuality, int pixelMin, int pixelMax, bool autoscale)
+CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, float exposureTime, bool enableJpeg, int JpegQuality, int pixelMin, int pixelMax, bool autoscale)
     : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
-    // printf("Malloc constructor\n");
     ClearImage();
 
     if ((imageWidth <= 0) || (imageHeight <= 0))
@@ -50,7 +56,6 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
     }
 
     m_imageData = new unsigned short[imageWidth * imageHeight];
-    // printf("Allocated: %p\n", m_imageData);
     if (m_imageData == NULL)
     {
         return;
@@ -66,6 +71,7 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
     }
     m_imageWidth = imageWidth;
     m_imageHeight = imageHeight;
+    m_exposureTime = exposureTime;
 
     if (enableJpeg)
     {
@@ -99,6 +105,7 @@ CImageData::CImageData(const CImageData &rhs)
     memcpy(m_imageData, rhs.m_imageData, rhs.m_imageWidth * rhs.m_imageHeight * sizeof(unsigned short));
     m_imageWidth = rhs.m_imageWidth;
     m_imageHeight = rhs.m_imageHeight;
+    m_exposureTime = rhs.m_exposureTime;
 
     m_jpegData = rhs.m_jpegData;
     sz_jpegData = rhs.sz_jpegData;
@@ -110,7 +117,6 @@ CImageData::CImageData(const CImageData &rhs)
 
 CImageData &CImageData::operator=(const CImageData &rhs)
 {
-    // printf("Assignment called\n");
     if (&rhs == this)
     { // self asignment
         return *this;
@@ -253,6 +259,8 @@ void CImageData::Add(const CImageData &rhs)
         targetPixelPtr++;
     }
 
+    m_exposureTime += rhs.m_exposureTime;
+
     if (convert_jpeg)
         ConvertJPEG();
 }
@@ -320,7 +328,6 @@ void CImageData::FlipHorizontal()
     if (convert_jpeg)
         ConvertJPEG();
 }
-
 
 #include <stdint.h>
 

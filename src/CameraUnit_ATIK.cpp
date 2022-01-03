@@ -1,10 +1,19 @@
-// CameraUnit.cpp : implementation file
-//
+/**
+ * @file CameraUnit_ATIK.cpp
+ * @author Sunip K. Mukherjee (sunipkmukherjee@gmail.com)
+ * @brief Implementation of CameraUnit interfaces for ATIK Cameras
+ * @version 0.1
+ * @date 2022-01-03
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #include "CameraUnit_ATIK.hpp"
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
+#include <mutex>
 
 #if !defined(OS_Windows)
 #include <unistd.h>
@@ -12,12 +21,12 @@ static inline void Sleep(int dwMilliseconds)
 {
     usleep(dwMilliseconds * 1000);
 }
-#endif
-
+#else
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
+#endif
 #endif
 
 #define eprintf(str, ...)                                                   \
@@ -194,7 +203,8 @@ close:
 
 CCameraUnit_ATIK::~CCameraUnit_ATIK()
 {
-    CriticalSection::Lock lock(criticalSection_);
+    // CriticalSection::Lock lock(criticalSection_);
+    std::lock_guard<std::mutex> lock(cs_);
     ArtemisDisconnect(hCam);
     m_initializationOK = false;
 #ifdef _WIN32
@@ -204,7 +214,8 @@ CCameraUnit_ATIK::~CCameraUnit_ATIK()
 
 void CCameraUnit_ATIK::CancelCapture()
 {
-    CriticalSection::Lock lock(criticalSection_);
+    // CriticalSection::Lock lock(criticalSection_);
+    std::lock_guard<std::mutex> lock(cs_);
     cancelCapture_ = true;
     // abort acquisition
     ArtemisAbortExposure(hCam);
@@ -214,7 +225,8 @@ void CCameraUnit_ATIK::CancelCapture()
 
 CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
 {
-    CriticalSection::Lock lock(criticalSection_);
+    // CriticalSection::Lock lock(criticalSection_);
+    std::unique_lock<std::mutex> lock(cs_);
     CImageData retVal;
     cancelCapture_ = false;
     BOOL image_ready;
@@ -228,6 +240,8 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     int cameraState = 0;
 
     int exposure_ms = exposure_ * 1000;
+
+    float exposure_now = exposure_;
     if (exposure_ms < 1)
         exposure_ms = 1;
 
@@ -243,11 +257,13 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     sleep_time_ms = 1000 * ArtemisExposureTimeRemaining(hCam); // sleep time in ms
     if (sleep_time_ms < 0)
         sleep_time_ms = 0;
-    lock.Unlock();
+    // lock.Unlock();
+    lock.unlock();
 
     Sleep(sleep_time_ms);
 
-    lock.Relock();
+    // lock.Relock();
+    lock.lock();
     while (!(image_ready = ArtemisImageReady(hCam)))
     {
         cameraState = ArtemisGetCameraState(hCam);
@@ -276,6 +292,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
         goto exit_err;
     }
     memcpy(retVal.GetImageData(), pImgBuf, w * h * 2);
+    retVal.SetImageExposure(exposure_now);
 exit_err:
     // printf("Exiting capture\n");
     return retVal;
@@ -312,7 +329,6 @@ double CCameraUnit_ATIK::GetTemperature() const
     return retVal;
 }
 
-//
 void CCameraUnit_ATIK::SetBinningAndROI(int binX, int binY, int x_min, int x_max, int y_min, int y_max)
 {
     if (!m_initializationOK)
@@ -320,7 +336,8 @@ void CCameraUnit_ATIK::SetBinningAndROI(int binX, int binY, int x_min, int x_max
         return;
     }
 
-    CriticalSection::Lock lock(criticalSection_);
+    // CriticalSection::Lock lock(criticalSection_);
+    std::lock_guard<std::mutex> lock(cs_);
     if (!m_initializationOK)
     {
         return;
@@ -455,7 +472,8 @@ void CCameraUnit_ATIK::SetExposure(float exposureInSeconds)
 
     if (maxexposurems > 10 * 60 * 1000) // max exposure 10 minutes
         maxexposurems = 10 * 60 * 1000;
-    CriticalSection::Lock lock(criticalSection_);
+    // CriticalSection::Lock lock(criticalSection_);
+    std::lock_guard<std::mutex> lock(cs_);
     exposure_ = maxexposurems * 0.001; // 1 ms increments only
 }
 

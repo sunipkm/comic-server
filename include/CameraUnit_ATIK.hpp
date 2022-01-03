@@ -1,9 +1,19 @@
-#ifndef __CAMERAUNIT_ATIK_H__
-#define __CAMERAUNIT_ATIK_H__
+/**
+ * @file CameraUnit_ATIK.hpp
+ * @author Sunip K. Mukherjee (sunipkmukherjee@gmail.com)
+ * @brief Interface for ATIK CameraUnit
+ * @version 0.1
+ * @date 2022-01-03
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+#ifndef __CAMERAUNIT_ATIK_HPP__
+#define __CAMERAUNIT_ATIK_HPP__
 
 #include "CameraUnit.hpp"
-#include "CriticalSection.hpp"
 #include "AtikCameras.h"
+#include <mutex>
 
 class CCameraUnit_ATIK : public CCameraUnit
 {
@@ -11,10 +21,10 @@ class CCameraUnit_ATIK : public CCameraUnit
     struct ARTEMISPROPERTIES props;
 
     bool m_initializationOK;
-    CriticalSection criticalSection_;
+    // CriticalSection criticalSection_;
+    std::mutex cs_;
     bool cancelCapture_;
     std::string status_;
-    CriticalSection statusCriticalSection_;
 
     bool hasshutter;
 
@@ -47,34 +57,33 @@ class CCameraUnit_ATIK : public CCameraUnit
     char cam_name[100];
 
 public:
+    /**
+     * @brief Construct a new Atik Camera Object. This will connect to the first available Atik camera.
+     * 
+     */
     CCameraUnit_ATIK();
+    /**
+     * @brief Close connection to the connected Atik camera.
+     * 
+     */
     ~CCameraUnit_ATIK();
 
-    // Control
     CImageData CaptureImage(long int &retryCount);
     void CancelCapture();
 
-    // Accessors
     bool CameraReady() const { return m_initializationOK; }
     const char *CameraName() const { return cam_name; }
-
     void SetExposure(float exposureInSeconds);
     float GetExposure() const { return exposure_; }
-
     void SetShutterIsOpen(bool open);
-
     void SetReadout(int ReadSpeed);
-
     void SetTemperature(double temperatureInCelcius);
     double GetTemperature() const;
-
     void SetBinningAndROI(int x, int y, int x_min = 0, int x_max = 0, int y_min = 0, int y_max = 0);
     int GetBinningX() const { return binningX_; }
     int GetBinningY() const { return binningY_; }
     const ROI *GetROI() const;
-
     std::string GetStatus() const { return status_; }
-
     int GetCCDWidth() const { return CCDWidth_; }
     int GetCCDHeight() const { return CCDHeight_; }
 
@@ -85,4 +94,4 @@ private:
     int ArtemisGetCameraState(ArtemisHandle h);
 };
 
-#endif // __CAMERAUNIT_PI_H__
+#endif // __CAMERAUNIT_ATIK_HPP__
