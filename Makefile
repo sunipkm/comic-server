@@ -1,7 +1,8 @@
 CXX = g++
+CC = gcc
 
-EDCXXFLAGS:= -Wall -O2 -std=c++11 -I drivers/ -I include/ -I network/ $(CXXFLAGS) -DDEFINE_WEAK
-EDLDFLAGS:= -lpthread -lcfitsio$(LDFLAGS)
+EDCXXFLAGS:= -Wall -O2 -std=c++11 -I drivers/ -I include/ -I network/ -I clkgen/include $(CXXFLAGS) -DDEFINE_WEAK
+EDLDFLAGS:= -lpthread -lcfitsio -lncursest $(LDFLAGS)
 
 ifeq ($(OS),Windows_NT)
     CCFLAGS += -D WIN32
@@ -36,9 +37,13 @@ else
 endif
 
 CPPOBJS = $(patsubst %.cpp,%.o,$(wildcard src/*.cpp))
+CLKGENTARGET = clkgen/libclkgen.a
 
-all: $(CPPOBJS)
-	$(CXX) -o atiktest.out $(CPPOBJS) $(EDLDFLAGS)
+all: $(CPPOBJS) $(CLKGENTARGET)
+	$(CXX) -o atiktest.out $(CPPOBJS) $(CLKGENTARGET) $(EDLDFLAGS)
+
+$(CLKGENTARGET):
+	cd clkgen && make && cd ..
 
 %.o: %.cpp
 	$(CXX) $(EDCXXFLAGS) -o $@ -c $<
