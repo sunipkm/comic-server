@@ -26,6 +26,8 @@ typedef struct
     bool reset;
     // lock
     pthread_mutex_t lock;
+    // log file
+    FILE *fp;
 } ThermalPID_Data;
 
 void ThermalPID_Control(clkgen_t id, void *_pid_data);
@@ -159,6 +161,7 @@ int main(int argc, char *argv[])
     curses_init();
     ThermalPID_Data pid_data[1];
     memset(pid_data, 0x0, sizeof(ThermalPID_Data));
+    pid_data->fp = fopen("templog.txt", "w+");
     pthread_mutex_init(&(pid_data->lock), NULL);
     pid_data->cam = cam;
     // Start timer at 20 ms clock (default)
@@ -333,6 +336,7 @@ int main(int argc, char *argv[])
             }
         }
     }
+    fclose(pid_data->fp);
     exit(0);
 }
 
@@ -396,6 +400,11 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
     mvwprintw(win_data, 4, 1, "%s", clearline);
     // 1. Make measurement
     float mes = pid_data->cam->GetTemperature();
+    if (pid_data->fp != NULL)
+    {
+        fprintf(pid_data->fp, "[%s] %.2f\n", get_time_now(), mes);
+        fflush(pid_data->fp);
+    }
     ++runcount;
     // Try to lock PID data, time sensitive
     if (pthread_mutex_trylock(&(pid_data->lock)))
