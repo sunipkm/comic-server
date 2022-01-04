@@ -61,31 +61,54 @@ void curses_cleanup()
     endwin();
 }
 
+static char clearline[512];
+
+void DrawClearLine()
+{
+    int i = 0;
+    for (i = 0; i < COLS - 2; i++)
+    {
+        clearline[i] = ' ';
+    }
+    clearline[i] = '\0';
+}
+
 void curses_init()
 {
-    atexit(curses_cleanup);
+    static bool runOnce = false;
+    if (!runOnce)
+    {
+        runOnce = true;
+        atexit(curses_cleanup);
+    }
     initscr();
     clear();
     noecho();
     cbreak();
     curs_set(0);
-    if (COLS < 80)
+
+    w_data = COLS;
+    h_data = 6;
+    x_data = 0;
+    y_data = 0; // top of the window
+
+    w_opts = COLS;
+    h_opts = LINES - h_data;
+    x_opts = 0;
+    y_opts = h_data;
+
+    if (COLS < 80 || LINES < (h_data + n_choices + 6) || COLS > 500)
     {
-        mvprintw(0, 0, "Minimum terminal width, you have %d\n", COLS);
+        mvprintw(0, 0, "Minimum terminal size 80 x %d, you have %d x %d\nPress any key to exit...", h_data + n_choices + 6, COLS, LINES);
+        getch();
         endwin();
         exit(0);
     }
 
-    w_data = COLS;
-    h_data = 5;
-    x_data = (COLS - w_data) / 2;
-    y_data = 0; // top of the window
-    newwin(h_data, w_data, y_data, x_data);
-
-    w_opts = COLS;
-    h_opts = LINES - h_data;
-    newwin(h_opts, w_opts, y_opts, x_opts);
+    win_data = newwin(h_data, w_data, y_data, x_data);
+    win_opts = newwin(h_opts, w_opts, y_opts, x_opts);
     keypad(win_opts, TRUE);
+    DrawClearLine();
 }
 
 int main(int argc, char *argv[])
@@ -132,7 +155,8 @@ int main(int argc, char *argv[])
     memset(pid_data, 0x0, sizeof(ThermalPID_Data));
     pid_data->cam = cam;
     // Start timer at 20 ms clock (default)
-    clkgen_t clk = create_clk(20 * 1000 * 1000, ThermalPID_Control, pid_data);
+    pid_data->Time_Rate = 0.02; // 20 ms
+    clkgen_t clk = create_clk(pid_data->Time_Rate * 1000000000LLU, ThermalPID_Control, pid_data); // unsigned long long
     int c, select = 0, choice = 0, choice_made = 0;
     while (!done)
     {
@@ -157,6 +181,13 @@ int main(int argc, char *argv[])
         case '\n': // selection
             choice = select;
             choice_made = 1;
+            break;
+
+        case KEY_RESIZE:
+            curses_cleanup();
+            curses_init();
+            wclear(win_data);
+            box(win_data, 0, 0);
             break;
 
         default:
@@ -193,7 +224,7 @@ int main(int argc, char *argv[])
                 wrefresh(win_opts);
                 echo();
                 int num_run = 1;
-                wscanw(win_opts, " %f", &(num_run));
+                wscanw(win_opts, " %d", &(num_run));
                 noecho();
                 if (num_run > 50)
                     num_run = 50;
@@ -249,7 +280,7 @@ void print_menu(WINDOW *win, int sel)
     box(win, 0, 0);
     int x = 2, y = 2;
     mvwprintw(win, y, x, "Press up/down arrow keys to highlight a menu and press enter to select.");
-    y++;
+    y += 2;
     for (int i = 0; i < n_choices; i++)
     {
         if (sel == i) // Highlight the present choice
@@ -276,14 +307,17 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
                  mes_old = 0.0f;
     static int runcount = 0;
     static bool ready = false;
+    static bool firstRun = true;
     ThermalPID_Data *pid_data = (ThermalPID_Data *)_pid_data;
     // reset logic
     if (pid_data->reset)
     {
+        firstRun = true;
         ready = false;
         err = 0;
         prev_err = 0;
         i_err = 0;
+        runcount = 0;
         pid_data->reset = false;
     }
     // 1. Make measurement
@@ -297,9 +331,17 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
     if (Temp_Rate_Target < 1e-6)
         Temp_Rate_Target = 0;
     ++runcount;
-    wclear(win_data);
-    box(win_data, 0, 0);
-    mvwprintw(win_data, 1, 1, "Run: %.2f Temp: %.2f C", runcount * pid_data->Time_Rate, mes);
+
+    if (firstRun)
+    {
+        wclear(win_data);
+        box(win_data, 0, 0);
+        firstRun = false;
+    }
+    mvwprintw(win_data, 1, 1, "%s", clearline);
+    mvwprintw(win_data, 2, 1, "%s", clearline);
+    mvwprintw(win_data, 3, 1, "%s", clearline);
+    mvwprintw(win_data, 1, 1, "Run: %.2f s Temp: %.2f C", runcount * pid_data->Time_Rate, mes);
     if (ready)
     {
         // 3. Calculate Active Time Rate
