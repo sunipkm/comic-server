@@ -364,6 +364,20 @@ void print_menu(WINDOW *win, int sel)
     wrefresh(win);
 }
 
+static inline char *get_time_now_str()
+{
+#ifndef _MSC_VER
+    static __thread char buf[128];
+#else
+    __declspec( thread ) static char buf[128];
+#endif
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    snprintf(buf, sizeof(buf), "%02d:%02d:%02d",
+             tm.tm_hour, tm.tm_min, tm.tm_sec);
+    return buf;
+}
+
 void ThermalPID_Control(clkgen_t id, void *_pid_data)
 {
     static float err = 0.0f, // current delta
@@ -402,7 +416,7 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
     float mes = pid_data->cam->GetTemperature();
     if (pid_data->fp != NULL)
     {
-        fprintf(pid_data->fp, "[%s] %.2f\n", get_time_now(), mes);
+        fprintf(pid_data->fp, "[%s] %.2f\n", get_time_now_str(), mes);
         fflush(pid_data->fp);
     }
     ++runcount;
