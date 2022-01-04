@@ -281,6 +281,8 @@ int main(int argc, char *argv[])
                 pthread_mutex_lock(&(pid_data->lock));
                 pid_data->Kp = tmp;
                 pthread_mutex_unlock(&(pid_data->lock));
+                wprintw(win_opts, "Kp updated, press any key to continue...");
+                wgetch(win_opts);
 
                 break;
             }
