@@ -241,12 +241,14 @@ int main(int argc, char *argv[])
                     tmp = 0;
                     wprintw(win_opts, "Warning: Temperature gradient above 0 is not supported.\nPress any key to continue...");
                     wgetch(win_opts);
+                    break;
                 }
                 if (tmp < -1)
                 {
                     tmp = -1;
                     wprintw(win_opts, "Warning: Temperature gradient below -1 C/s is not supported.\nPress any key to continue...");
                     wgetch(win_opts);
+                    break;
                 }
                 pthread_mutex_lock(&(pid_data->lock));
                 pid_data->Temp_Rate_Target = tmp;
