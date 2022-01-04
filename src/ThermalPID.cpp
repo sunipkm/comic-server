@@ -387,12 +387,15 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
     // 1. Make measurement
     float mes = pid_data->cam->GetTemperature();
     ++runcount;
+    // Print Run Info
+    mvwprintw(win_data, 1, 1, "Run: %.2f s Temp: %.2f C", runcount * pid_data->Time_Rate, mes);
     // Try to lock PID data, time sensitive
     if (pthread_mutex_trylock(&(pid_data->lock)))
     {
         // store measurement and move on
         mes_oldold = mes_old;
         mes_old = mes;
+        wrefresh(win_data);
         if (runcount == 2)
             ready = true;
         return;
@@ -405,8 +408,6 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
         Temp_Rate_Target = (mes - pid_data->Temp_Target) / pid_data->Time_Rate;
     if (fabs(Temp_Rate_Target) < 1e-6)
         Temp_Rate_Target = 0;
-    // Print Run Info
-    mvwprintw(win_data, 1, 1, "Run: %.2f s Temp: %.2f C", runcount * pid_data->Time_Rate, mes);
     long long int sleepTime = 0;
     if (ready)
     {
