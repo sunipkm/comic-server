@@ -2,7 +2,7 @@ CXX = g++
 CC = gcc
 
 EDCXXFLAGS:= -Wall -O2 -std=c++11 -I drivers/ -I include/ -I network/ -I clkgen/include $(CXXFLAGS) -DDEFINE_WEAK
-EDLDFLAGS:= -lpthread -lcfitsio -lncursest $(LDFLAGS)
+EDLDFLAGS:= -lpthread -lcfitsio -lncursest -lm $(LDFLAGS)
 
 ifeq ($(OS),Windows_NT)
     CCFLAGS += -D WIN32

@@ -5,6 +5,7 @@
 #include "clkgen.h"
 #include "CameraUnit_ATIK.hpp"
 #include "meb_print.h"
+#include <math.h>
 
 typedef struct
 {
@@ -400,7 +401,7 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
     float Temp_Rate_Target = pid_data->Temp_Rate_Target;
     if ((mes - pid_data->Temp_Target) < 1) // less than 1 degree
         Temp_Rate_Target = (mes - pid_data->Temp_Target) / pid_data->Time_Rate;
-    if (Temp_Rate_Target < 1e-6)
+    if (fabs(Temp_Rate_Target) < 1e-6)
         Temp_Rate_Target = 0;
     // Print Run Info
     mvwprintw(win_data, 1, 1, "Run: %.2f s Temp: %.2f C", runcount * pid_data->Time_Rate, mes);
