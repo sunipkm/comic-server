@@ -405,7 +405,7 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
         Temp_Rate_Target = 0;
     // Print Run Info
     mvwprintw(win_data, 1, 1, "Run: %.2f s Temp: %.2f C", runcount * pid_data->Time_Rate, mes);
-    int sleepTime = 0;
+    long long int sleepTime = 0;
     if (ready)
     {
         // 3. Calculate Active Time Rate
