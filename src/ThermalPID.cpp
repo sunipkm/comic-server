@@ -431,6 +431,11 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
     {
         ready = true;
     }
+    // 5. Update old data
+    mes_oldold = mes_old;
+    mes_old = mes;
+    // refresh window
+    wrefresh(win_data);
     // Unlock pid_data
     pthread_mutex_unlock(&(pid_data->lock));
     // 4. Actuate
@@ -443,9 +448,4 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
         sleepTime -= 1000;
         usleep(sleepTime);
     }
-    // 5. Update old data
-    mes_oldold = mes_old;
-    mes_old = mes;
-    // refresh window
-    wrefresh(win_data);
 }
