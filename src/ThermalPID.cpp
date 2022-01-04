@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
     pthread_mutex_init(&(pid_data->lock), NULL);
     pid_data->cam = cam;
     // Start timer at 20 ms clock (default)
-    pid_data->Time_Rate = 0.02;                                                                   // 20 ms
+    pid_data->Time_Rate = 1;                                                                   // 20 ms
     clkgen_t clk = create_clk(pid_data->Time_Rate * 1000000000LLU, ThermalPID_Control, pid_data); // unsigned long long
     int c, select = 0, choice = 0, choice_made = 0;
     while (!done)
