@@ -223,6 +223,8 @@ int main(int argc, char *argv[])
                 pthread_mutex_lock(&(pid_data->lock));
                 pid_data->Temp_Target = tmp;
                 pthread_mutex_unlock(&(pid_data->lock));
+                wprintw(win_opts, "Temp target updated, press any key to continue...");
+                wgetch(win_opts);
 
                 break;
             }
@@ -249,6 +251,8 @@ int main(int argc, char *argv[])
                 pthread_mutex_lock(&(pid_data->lock));
                 pid_data->Temp_Rate_Target = tmp;
                 pthread_mutex_unlock(&(pid_data->lock));
+                wprintw(win_opts, "Temp gradient target updated, press any key to continue...");
+                wgetch(win_opts);
 
                 break;
             }
@@ -297,6 +301,8 @@ int main(int argc, char *argv[])
                 pthread_mutex_lock(&(pid_data->lock));
                 pid_data->Ki = tmp;
                 pthread_mutex_unlock(&(pid_data->lock));
+                wprintw(win_opts, "Ki updated, press any key to continue...");
+                wgetch(win_opts);
 
                 break;
             }
@@ -311,6 +317,8 @@ int main(int argc, char *argv[])
                 pthread_mutex_lock(&(pid_data->lock));
                 pid_data->Kd = tmp;
                 pthread_mutex_unlock(&(pid_data->lock));
+                wprintw(win_opts, "Kd updated, press any key to continue...");
+                wgetch(win_opts);
 
                 break;
             }
@@ -387,8 +395,6 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
     // 1. Make measurement
     float mes = pid_data->cam->GetTemperature();
     ++runcount;
-    // Print Run Info
-    mvwprintw(win_data, 1, 1, "Run: %.2f s Temp: %.2f C", runcount * pid_data->Time_Rate, mes);
     // Try to lock PID data, time sensitive
     if (pthread_mutex_trylock(&(pid_data->lock)))
     {
@@ -402,6 +408,8 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
     }
     pid_data->T = mes;
     pid_data->runcount = runcount;
+    // Print Run Info
+    mvwprintw(win_data, 1, 1, "Run: %.2f s  Temp: %.2f C  Target: %.2f C Grad: %.2f C/s", runcount * pid_data->Time_Rate, mes, pid_data->Temp_Target, pid_data->Temp_Rate_Target);
     // 2. Calculate Required Time Rate
     float Temp_Rate_Target = pid_data->Temp_Rate_Target;
     if ((mes - pid_data->Temp_Target) < 1) // less than 1 degree
