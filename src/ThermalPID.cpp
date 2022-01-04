@@ -23,6 +23,8 @@ typedef struct
     int sleepTimeUs;
     // readonly
     bool reset;
+    // lock
+    pthread_mutex_t lock;
 } ThermalPID_Data;
 
 void ThermalPID_Control(clkgen_t id, void *_pid_data);
@@ -148,14 +150,18 @@ int main(int argc, char *argv[])
     int jpg_sz;
     img.GetJPEGData(jpg_ptr, jpg_sz);
     FILE *fp = fopen("test.jpg", "wb");
-    fwrite(jpg_ptr, 1, jpg_sz, fp);
-    fclose(fp);
+    if (fp != NULL)
+    {
+        fwrite(jpg_ptr, 1, jpg_sz, fp);
+        fclose(fp);
+    }
     curses_init();
     ThermalPID_Data pid_data[1];
     memset(pid_data, 0x0, sizeof(ThermalPID_Data));
+    pthread_mutex_init(&(pid_data->lock), NULL);
     pid_data->cam = cam;
     // Start timer at 20 ms clock (default)
-    pid_data->Time_Rate = 0.02; // 20 ms
+    pid_data->Time_Rate = 0.02;                                                                   // 20 ms
     clkgen_t clk = create_clk(pid_data->Time_Rate * 1000000000LLU, ThermalPID_Control, pid_data); // unsigned long long
     int c, select = 0, choice = 0, choice_made = 0;
     while (!done)
@@ -201,20 +207,48 @@ int main(int argc, char *argv[])
             {
             case 0:
             {
+                float tmp;
                 wprintw(win_opts, "Temperature target (C): ");
                 wrefresh(win_opts);
                 echo();
-                wscanw(win_opts, " %f", &(pid_data->Temp_Target));
+                wscanw(win_opts, " %f", &(tmp));
                 noecho();
+                if (tmp < -20)
+                {
+                    tmp = -20;
+                    wprintw(win_opts, "Warning: Temperature setting below -20 is not supported.\nPress any key to continue...");
+                    wgetch(win_opts);
+                }
+                pthread_mutex_lock(&(pid_data->lock));
+                pid_data->Temp_Target = tmp;
+                pthread_mutex_unlock(&(pid_data->lock));
+
                 break;
             }
             case 1:
             {
+                float tmp;
                 wprintw(win_opts, "Temperature Gradient target (C/s): ");
                 wrefresh(win_opts);
                 echo();
-                wscanw(win_opts, " %f", &(pid_data->Temp_Rate_Target));
+                wscanw(win_opts, " %f", &(tmp));
                 noecho();
+                if (tmp > 0)
+                {
+                    tmp = 0;
+                    wprintw(win_opts, "Warning: Temperature gradient above 0 is not supported.\nPress any key to continue...");
+                    wgetch(win_opts);
+                }
+                if (tmp < -1)
+                {
+                    tmp = -1;
+                    wprintw(win_opts, "Warning: Temperature gradient below -1 C/s is not supported.\nPress any key to continue...");
+                    wgetch(win_opts);
+                }
+                pthread_mutex_lock(&(pid_data->lock));
+                pid_data->Temp_Rate_Target = tmp;
+                pthread_mutex_unlock(&(pid_data->lock));
+
                 break;
             }
             case 2:
@@ -237,29 +271,44 @@ int main(int argc, char *argv[])
             }
             case 3:
             {
+                float tmp;
                 wprintw(win_opts, "Kp: ");
                 wrefresh(win_opts);
                 echo();
-                wscanw(win_opts, " %f", &(pid_data->Temp_Rate_Target));
+                wscanw(win_opts, " %f", &(tmp));
                 noecho();
+                pthread_mutex_lock(&(pid_data->lock));
+                pid_data->Kp = tmp;
+                pthread_mutex_unlock(&(pid_data->lock));
+
                 break;
             }
             case 4:
             {
+                float tmp;
                 wprintw(win_opts, "Ki (s^-1): ");
                 wrefresh(win_opts);
                 echo();
-                wscanw(win_opts, " %f", &(pid_data->Temp_Rate_Target));
+                wscanw(win_opts, " %f", &(tmp));
                 noecho();
+                pthread_mutex_lock(&(pid_data->lock));
+                pid_data->Ki = tmp;
+                pthread_mutex_unlock(&(pid_data->lock));
+
                 break;
             }
             case 5:
             {
+                float tmp;
                 wprintw(win_opts, "Kd (s): ");
                 wrefresh(win_opts);
                 echo();
-                wscanw(win_opts, " %f", &(pid_data->Temp_Rate_Target));
+                wscanw(win_opts, " %f", &(tmp));
                 noecho();
+                pthread_mutex_lock(&(pid_data->lock));
+                pid_data->Kd = tmp;
+                pthread_mutex_unlock(&(pid_data->lock));
+
                 break;
             }
             case 6:
@@ -320,8 +369,31 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
         runcount = 0;
         pid_data->reset = false;
     }
+    // Draw box for first run
+    if (firstRun)
+    {
+        wclear(win_data);
+        box(win_data, 0, 0);
+        firstRun = false;
+    }
+    // Clear lines
+    mvwprintw(win_data, 1, 1, "%s", clearline);
+    mvwprintw(win_data, 2, 1, "%s", clearline);
+    mvwprintw(win_data, 3, 1, "%s", clearline);
+    mvwprintw(win_data, 4, 1, "%s", clearline);
     // 1. Make measurement
     float mes = pid_data->cam->GetTemperature();
+    ++runcount;
+    // Try to lock PID data, time sensitive
+    if (pthread_mutex_trylock(&(pid_data->lock)))
+    {
+        // store measurement and move on
+        mes_oldold = mes_old;
+        mes_old = mes;
+        if (runcount == 2)
+            ready = true;
+        return;
+    }
     pid_data->T = mes;
     pid_data->runcount = runcount;
     // 2. Calculate Required Time Rate
@@ -330,18 +402,9 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
         Temp_Rate_Target = (mes - pid_data->Temp_Target) / pid_data->Time_Rate;
     if (Temp_Rate_Target < 1e-6)
         Temp_Rate_Target = 0;
-    ++runcount;
-
-    if (firstRun)
-    {
-        wclear(win_data);
-        box(win_data, 0, 0);
-        firstRun = false;
-    }
-    mvwprintw(win_data, 1, 1, "%s", clearline);
-    mvwprintw(win_data, 2, 1, "%s", clearline);
-    mvwprintw(win_data, 3, 1, "%s", clearline);
+    // Print Run Info
     mvwprintw(win_data, 1, 1, "Run: %.2f s Temp: %.2f C", runcount * pid_data->Time_Rate, mes);
+    int sleepTime = 0;
     if (ready)
     {
         // 3. Calculate Active Time Rate
@@ -356,25 +419,28 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
         float I = pid_data->Ki * i_err * pid_data->Time_Rate;
         float D = pid_data->Kd * derr / pid_data->Time_Rate;
 
-        int sleepTime = (P + I + D) * 1e6;
+        sleepTime = (P + I + D) * 1e6;
         pid_data->sleepTimeUs = sleepTime;
         sleepTime = (sleepTime % ((int)(pid_data->Time_Rate * 1e6)));
         mvwprintw(win_data, 2, 1, "dT = %.3e | P %.3e I %.3e D %.3e", dT, P, I, D);
-        mvwprintw(win_data, 3, 1, "Actuate = %d us", sleepTime);
-        // 4. Actuate
-        if (sleepTime <= 1500)
-        {
-            // do nothing
-        }
-        else
-        {
-            sleepTime -= 1000;
-            usleep(sleepTime);
-        }
+        mvwprintw(win_data, 3, 1, "Kp = %.2e Ki = %.2e Kd = %.2e", pid_data->Kp, pid_data->Ki, pid_data->Kd);
+        mvwprintw(win_data, 4, 1, "Actuate = %d us", sleepTime);
     }
     else if (runcount == 2)
     {
         ready = true;
+    }
+    // Unlock pid_data
+    pthread_mutex_unlock(&(pid_data->lock));
+    // 4. Actuate
+    if (sleepTime <= 1500)
+    {
+        // do nothing
+    }
+    else
+    {
+        sleepTime -= 1000;
+        usleep(sleepTime);
     }
     // 5. Update old data
     mes_oldold = mes_old;
