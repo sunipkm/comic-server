@@ -152,6 +152,7 @@ int main(int argc, char *argv[])
     }
     cam->SetBinningAndROI(1, 1);
     cam->SetExposure(exposure);
+    std::cout << cam->GetExposure() << std::endl;
     CImageData img = cam->CaptureImage(retryCount);
     if (!img.HasData())
     {

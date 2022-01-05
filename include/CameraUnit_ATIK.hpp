@@ -71,21 +71,21 @@ public:
     CImageData CaptureImage(long int &retryCount);
     void CancelCapture();
 
-    bool CameraReady() const { return m_initializationOK; }
-    const char *CameraName() const { return cam_name; }
+    inline bool CameraReady() const { return m_initializationOK; }
+    inline const char *CameraName() const { return cam_name; }
     void SetExposure(float exposureInSeconds);
-    float GetExposure() const { return exposure_; }
+    inline float GetExposure() const { return exposure_; }
     void SetShutterIsOpen(bool open);
     void SetReadout(int ReadSpeed);
     void SetTemperature(double temperatureInCelcius);
     double GetTemperature() const;
     void SetBinningAndROI(int x, int y, int x_min = 0, int x_max = 0, int y_min = 0, int y_max = 0);
-    int GetBinningX() const { return binningX_; }
-    int GetBinningY() const { return binningY_; }
+    inline int GetBinningX() const { return binningX_; }
+    inline int GetBinningY() const { return binningY_; }
     const ROI *GetROI() const;
-    std::string GetStatus() const { return status_; }
-    int GetCCDWidth() const { return CCDWidth_; }
-    int GetCCDHeight() const { return CCDHeight_; }
+    inline std::string GetStatus() const { return status_; }
+    inline int GetCCDWidth() const { return CCDWidth_; }
+    inline int GetCCDHeight() const { return CCDHeight_; }
 
 private:
     bool StatusIsIdle();
