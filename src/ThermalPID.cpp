@@ -141,8 +141,17 @@ int main(int argc, char *argv[])
         exit(0);
     }
     bprintlf("Camera: %s\tTemperature: %.2f C", cam->CameraName(), cam->GetTemperature());
+    double exposure = 0.2;
+    if (argc == 2)
+    {
+        exposure = atof(argv[1]);
+        if (exposure < 0.001)
+            exposure = 0.001;
+        if (exposure > 20)
+            exposure = 20;
+    }
     cam->SetBinningAndROI(1, 1);
-    cam->SetExposure(0.2);
+    cam->SetExposure(exposure);
     CImageData img = cam->CaptureImage(retryCount);
     if (!img.HasData())
     {
@@ -158,6 +167,7 @@ int main(int argc, char *argv[])
         fwrite(jpg_ptr, 1, jpg_sz, fp);
         fclose(fp);
     }
+    exit(0);
     curses_init();
     ThermalPID_Data pid_data[1];
     memset(pid_data, 0x0, sizeof(ThermalPID_Data));
