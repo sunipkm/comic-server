@@ -516,7 +516,7 @@ bool CImageData::FindOptimumExposure(float &targetExposure, int &bin, float perc
         val = picdata[m_imageSize - coord];
     }
 
-    float targetExposure_ = targetExposure;
+    float targetExposure_;
     int bin_ = bin;
 
     /** If calculated median pixel is within pixelTarget +/- pixelTargetUncertainty, return current exposure **/
@@ -527,6 +527,7 @@ bool CImageData::FindOptimumExposure(float &targetExposure, int &bin, float perc
     }
 
     targetExposure = ((double)pixelTarget) * exposure / ((double)val); // target optimum exposure
+    targetExposure_ = targetExposure;
     dbprintlf("Required exposure: %f", targetExposure);
 
     if (changeBin)
@@ -565,6 +566,7 @@ ret:
         bin = 1;
     if (bin > maxAllowedBin)
         bin = maxAllowedBin;
+    dbprintlf(YELLOW_FG "Final exposure and bin: %f s, %d", targetExposure, bin);
     delete[] picdata;
     return true;
 }
