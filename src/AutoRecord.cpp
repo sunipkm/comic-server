@@ -44,15 +44,27 @@ int main(int argc, char *argv[])
     }
     cam->SetExposure(0.2);
     cam->SetBinningAndROI(1, 1, imgXMin, imgXMax, imgYMin, imgYMax);
+    unsigned long long counter = 0;
     while (!done)
     {
+        static char fname[512];
         static int bin = 1;
         static float exposure = 0.2;
         CImageData img = cam->CaptureImage(retryCount);
-        img.SaveFits("cam", NULL);
+        img.SaveFits(NULL, NULL);
         img.FindOptimumExposure(exposure, bin, pixelPercentile, pixelTarget, maxExposure, maxBin, 100, pixelUncertainty);
         cam->SetBinningAndROI(bin, bin, imgXMin, imgXMax, imgYMin, imgYMax);
         cam->SetExposure(exposure);
+        if (argc > 1)
+        {
+            unsigned char *ptr;
+            int sz;
+            img.GetJPEGData(ptr, sz);
+            snprintf(fname, sizeof(fname), "fits/%llu.jpg", ++counter);
+            FILE *fp = fopen(fname, "wb");
+            fwrite(ptr, sz, 1, fp);
+            fclose(fp);
+        }
         long int sleeptime = 1000000 * (cadence - exposure);
         if (sleeptime > 0)
             usleep(sleeptime);
