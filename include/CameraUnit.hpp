@@ -59,7 +59,7 @@ public:
      * 
      * @param exposureInSeconds 
      */
-    virtual void SetExposure(float exposureInMs) = 0;
+    virtual void SetExposure(float exposureInSeconds) = 0;
     /**
      * @brief Get the currently set exposure
      * 

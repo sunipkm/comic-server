@@ -14,6 +14,7 @@
 #include <string.h>
 #include <string>
 #include <mutex>
+#include <chrono>
 
 #if !defined(OS_Windows)
 #include <unistd.h>
@@ -29,13 +30,21 @@ static char THIS_FILE[] = __FILE__;
 #endif
 #endif
 
+#ifndef eprintf
 #define eprintf(str, ...)                                                   \
     {                                                                       \
         fprintf(stderr, "%s, %d: " str, __func__, __LINE__, ##__VA_ARGS__); \
         fflush(stderr);                                                     \
     }
-
+#endif
+#ifndef eprintlf
 #define eprintlf(str, ...) eprintf(str "\n", ##__VA_ARGS__)
+#endif
+
+static inline uint64_t getTime()
+{
+    return ((std::chrono::duration_cast<std::chrono::milliseconds>((std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now())).time_since_epoch())).count());
+}
 
 bool CCameraUnit_ATIK::HasError(int error, unsigned int line) const
 {
@@ -292,7 +301,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
         goto exit_err;
     }
     memcpy(retVal.GetImageData(), pImgBuf, w * h * 2);
-    retVal.SetImageExposure(exposure_now);
+    retVal.SetImageMetadata(exposure_now, binx, biny, GetTemperature(), getTime(), CameraName());
 exit_err:
     // printf("Exiting capture\n");
     return retVal;

@@ -16,6 +16,7 @@
 #include <windows.h>
 #define OS_Windows
 #endif
+#include <string>
 
 /**
  * @brief Image Data Statistics Storage Class
@@ -75,6 +76,12 @@ class CImageData
     int m_imageWidth;
 
     float m_exposureTime;
+    int m_binX;
+    int m_binY;
+    float m_temperature;
+    uint64_t m_timestamp;
+
+    std::string m_cameraName;
 
     unsigned short *m_imageData;
 
@@ -111,7 +118,7 @@ public:
      * @param pixelMax [optional] JPEG image scaling pixel count maximum, -1 for default (0xffff), overriden by autoscale flag
      * @param autoscale [optional] Auto-scale JPEG image brightness based on data
      */
-    CImageData(int imageWidth, int imageHeight, unsigned short *imageData = NULL, float exposureTime = 0, bool enableJpeg = false, int JpegQuality = 100, int pixelMin = -1, int pixelMax = -1, bool autoscale = true);
+    CImageData(int imageWidth, int imageHeight, unsigned short *imageData = NULL, float exposureTime = 0, int binX = 1, int binY = 1, float temperature = 0, uint64_t timestamp = 0, std::string cameraName = "", bool enableJpeg = false, int JpegQuality = 100, int pixelMin = -1, int pixelMax = -1, bool autoscale = true);
 
     /**
      * @brief Construct a new CImageData object from another CImageData object
@@ -166,6 +173,17 @@ public:
      * @param exposure Exposure in seconds
      */
     void SetImageExposure(float exposure) { m_exposureTime = exposure; }
+    /**
+     * @brief Set metadata for the image
+     * 
+     * @param exposureTime Exposure for the image
+     * @param binX X axia bin
+     * @param binY Y axis bin
+     * @param temperature CCD Temperature
+     * @param timestamp Image timestamp
+     * @param cameraName Camera name
+     */
+    void SetImageMetadata(float exposureTime, int binX = 1, int binY = 1, float temperature = 0, uint64_t timestamp = 0, std::string cameraName = "");
     /**
      * @brief Retrieve JPEG image corresponding to raw data
      * 
@@ -237,6 +255,43 @@ public:
      * 
      */
     void FlipHorizontal();
+    /**
+     * @brief Find optimum exposure from this exposure
+     * 
+     * @param targetExposure Target exposure time (output)
+     * @param bin Target bin size (output)
+     * @param percentilePixel Pixel percentile target (input, default: 80 percentile)
+     * @param pixelTarget Value terget for pixel percentile (input, default: 40000)
+     * @param maxAllowedExposure Maximum allowed exposure time (input, default: 10 s)
+     * @param maxAllowedBin Maximum allowed binning (input, default: 4)
+     * @param numPixelExclusion Number of pixels to be excluded from calculation (input, default: 100)
+     * @param pixelTargetUncertainty Value target uncertainty (inpit, default: 5000)
+     * @return bool Returns true.
+     */
+    bool FindOptimumExposure(float &targetExposure, int &bin, float percentilePixel = 0.8, int pixelTarget = 40000, float maxAllowedExposure = 10.0, int maxAllowedBin = 4, int numPixelExclusion = 100, int pixelTargetUncertainty = 5000);
+    /**
+     * @brief Find optimum exposure from this exposure without binning adjustment
+     * 
+     * @param targetExposure Target exposure time (output)
+     * @param percentilePixel Pixel percentile target (input, default: 80 percentile)
+     * @param pixelTarget Value terget for pixel percentile (input, default: 40000)
+     * @param maxAllowedExposure aximum allowed exposure time (input, default: 10 s)
+     * @param numPixelExclusion Number of pixels to be excluded from calculation (input, default: 100) 
+     * @param pixelTargetUncertainty Value target uncertainty (inpit, default: 5000)
+     * @return bool Returns true.
+     */
+    bool FindOptimumExposure(float &targetExposure, float percentilePixel = 0.8, int pixelTarget = 40000, float maxAllowedExposure = 10.0, int numPixelExclusion = 100, int pixelTargetUncertainty = 5000);
+    /**
+     * @brief Save image contained in CImageData
+     * 
+     * @param filePrefix File name prefix
+     * @param DirPrefix Directory name
+     * @param i Image index
+     * @param n Out of n
+     * @param outString Status output string pointer
+     * @param outStringSz Status output string max size
+     */
+    void SaveFits(char *filePrefix, char *DirPrefix, int i = -1, int n = -1, char *outString = NULL, ssize_t outStringSz = 0);
 
 private:
     /**

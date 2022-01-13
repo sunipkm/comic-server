@@ -11,9 +11,9 @@
 #include "ImageData.hpp"
 
 #include <math.h>
-#include <algorithm>
 #if !defined(OS_Windows)
 #include <string.h>
+#include <unistd.h>
 #else
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -22,6 +22,16 @@ static char THIS_FILE[] = __FILE__;
 #endif
 #endif
 #include "jpge.hpp"
+#include "meb_print.h"
+#include <fitsio.h>
+
+#include <algorithm>
+#include <chrono>
+
+static inline uint64_t getTime()
+{
+    return ((std::chrono::duration_cast<std::chrono::milliseconds>((std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now())).time_since_epoch())).count());
+}
 
 void CImageData::ClearImage()
 {
@@ -45,7 +55,7 @@ CImageData::CImageData()
     ClearImage();
 }
 
-CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, float exposureTime, bool enableJpeg, int JpegQuality, int pixelMin, int pixelMax, bool autoscale)
+CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, float exposureTime, int binX, int binY, float temperature, uint64_t timestamp, std::string cameraName, bool enableJpeg, int JpegQuality, int pixelMin, int pixelMax, bool autoscale)
     : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
     ClearImage();
@@ -56,12 +66,12 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
     }
 
     m_imageData = new unsigned short[imageWidth * imageHeight];
-    if (m_imageData == NULL)
+    if ((m_imageData == NULL) || (m_imageData == nullptr))
     {
         return;
     }
 
-    if (imageData)
+    if (!((imageData == NULL) || (imageData == nullptr)))
     {
         memcpy(m_imageData, imageData, imageWidth * imageHeight * sizeof(unsigned short));
     }
@@ -72,6 +82,15 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
     m_imageWidth = imageWidth;
     m_imageHeight = imageHeight;
     m_exposureTime = exposureTime;
+    m_binX = binX;
+    m_binY = binY;
+    m_temperature = temperature;
+    m_cameraName = cameraName;
+    m_timestamp = timestamp;
+    if (m_timestamp == 0)
+    {
+        m_timestamp = getTime();
+    }
 
     if (enableJpeg)
     {
@@ -81,6 +100,20 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
         this->pixelMax = pixelMax;
         this->autoscale = autoscale;
         ConvertJPEG();
+    }
+}
+
+void CImageData::SetImageMetadata(float exposureTime, int binX, int binY, float temperature, uint64_t timestamp, std::string cameraName)
+{
+    m_exposureTime = exposureTime;
+    m_binX = binX;
+    m_binY = binY;
+    m_temperature = temperature;
+    m_cameraName = cameraName;
+    m_timestamp = timestamp;
+    if (m_timestamp == 0)
+    {
+        m_timestamp = getTime();
     }
 }
 
@@ -431,4 +464,180 @@ void CImageData::GetJPEGData(unsigned char *&ptr, int &sz)
     }
     ptr = m_jpegData;
     sz = sz_jpegData;
+}
+
+/* Sorting */
+int _compare_uint16(const void *a, const void *b)
+{
+    return (*((unsigned short *)a) - *((unsigned short *)b));
+}
+/* End Sorting */
+
+bool CImageData::FindOptimumExposure(float &targetExposure, int &bin, float percentilePixel, int pixelTarget, float maxAllowedExposure, int maxAllowedBin, int numPixelExclusion, int pixelTargetUncertainty)
+{
+    double exposure = m_exposureTime;
+    targetExposure = exposure;
+    bool changeBin = true;
+    if (m_binX != m_binY)
+    {
+        changeBin = false;
+    }
+    if (maxAllowedBin < 0)
+    {
+        changeBin = false;
+    }
+    bin = m_binX;
+    dbprintlf("Input: %lf s, bin %d x %d", exposure, m_binX, m_binY);
+    double val;
+    int m_imageSize = m_imageHeight * m_imageWidth;
+    uint16_t *picdata = new uint16_t[m_imageSize];
+    memcpy(picdata, m_imageData, m_imageSize * sizeof(uint16_t));
+    qsort(picdata, m_imageSize, sizeof(unsigned short), _compare_uint16);
+
+    bool direction;
+    if (picdata[0] < picdata[m_imageSize - 1])
+        direction = true;
+    else
+        direction = false;
+    unsigned int coord;
+    if (percentilePixel > 99.99)
+        coord = m_imageSize - 1;
+    else
+        coord = floor((percentilePixel * (m_imageSize - 1) * 0.01));
+    int validPixelCoord = m_imageSize - 1 - coord;
+    if (validPixelCoord < numPixelExclusion)
+        coord = m_imageSize - 1 - numPixelExclusion;
+    if (direction)
+        val = picdata[coord];
+    else
+    {
+        if (coord == 0)
+            coord = 1;
+        val = picdata[m_imageSize - coord];
+    }
+
+    float targetExposure_ = targetExposure;
+    int bin_ = bin;
+
+    /** If calculated median pixel is within pixelTarget +/- pixelTargetUncertainty, return current exposure **/
+    dbprintlf("Uncertainty: %f, Reference: %d", fabs(pixelTarget - val), pixelTargetUncertainty);
+    if (fabs(pixelTarget - val) < pixelTargetUncertainty)
+    {
+        goto ret;
+    }
+
+    targetExposure = ((double)pixelTarget) * exposure / ((double)val); // target optimum exposure
+    dbprintlf("Required exposure: %f", targetExposure);
+
+    if (changeBin)
+    {
+        // consider lowering binning here
+        if (targetExposure_ < maxAllowedExposure)
+        {
+            dbprintlf("Considering lowering bin:");
+            while (targetExposure_ < maxAllowedExposure && bin_ > 2)
+            {
+                dbprintlf("Target %f < Allowed %f, bin %d > 2", targetExposure_, maxAllowedExposure, bin_);
+                targetExposure_ *= 4;
+                bin_ /= 2;
+            }
+        }
+        else
+        {
+            // consider bin increase here
+            while (targetExposure_ > maxAllowedExposure && ((bin_ * 2) <= maxAllowedBin))
+            {
+                targetExposure_ /= 4;
+                bin_ *= 2;
+            }
+        }
+    }
+    // update exposure and bin
+    targetExposure = targetExposure_;
+    bin = bin_;
+ret:
+    // boundary checking
+    if (targetExposure > maxAllowedExposure)
+        targetExposure = maxAllowedExposure;
+    // round to 1 ms
+    targetExposure = ((int)(targetExposure * 1000)) * 0.001;
+    if (bin < 1)
+        bin = 1;
+    if (bin > maxAllowedBin)
+        bin = maxAllowedBin;
+    delete[] picdata;
+    return true;
+}
+
+bool CImageData::FindOptimumExposure(float &targetExposure, float percentilePixel, int pixelTarget, float maxAllowedExposure, int numPixelExclusion, int pixelTargetUncertainty)
+{
+    int bin = 1;
+    return FindOptimumExposure(targetExposure, bin, percentilePixel, pixelTarget, maxAllowedExposure, -1, numPixelExclusion, pixelTargetUncertainty);
+}
+
+#if !defined(OS_Windows)
+#define _snprintf snprintf
+#endif
+
+void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char *outString, ssize_t outStringSz)
+{
+    static char defaultFilePrefix[] = "atik";
+#if !defined(OS_Windows)
+    static char defaultDirPrefix[] = "./fits/";
+#else
+    static char defaultDirPrefix[] = ".\\fits\\";
+#endif
+    if ((filePrefix == NULL) || (strlen(filePrefix) == 0))
+        filePrefix = defaultFilePrefix;
+    if ((DirPrefix == NULL) || (strlen(DirPrefix) == 0))
+        DirPrefix = defaultFilePrefix;
+    char fileName[256];
+    char *fileName_s;
+    fitsfile *fptr;
+    int status = 0, bitpix = USHORT_IMG, naxis = 2;
+    int bzero = 32768, bscale = 1;
+    long naxes[2] = {(long)(m_imageWidth), (long)(m_imageWidth)};
+    unsigned int exposureTime = m_exposureTime * 1000U;
+    if (n > 0)
+    {
+        if (_snprintf(fileName, sizeof(fileName), "%s\\%s_%ums_%d_%d_%llu.fit", DirPrefix, filePrefix, exposureTime, i, n, (unsigned long long) m_timestamp) > (int) sizeof(fileName))
+            goto print_err;
+    }
+    else
+    {
+        if (_snprintf(fileName, sizeof(fileName), "%s\\%s_%ums_%llu.fit", DirPrefix, filePrefix, exposureTime, (unsigned long long) m_timestamp) > (int) sizeof(fileName))
+            goto print_err;
+    }
+
+    unlink(fileName);
+    fileName_s = new char[strlen(fileName) + 16];
+    _snprintf(fileName_s, strlen(fileName) + 16, "%s[compress]", fileName);
+    if (!fits_create_file(&fptr, fileName_s, &status))
+    {
+        fits_create_img(fptr, bitpix, naxis, naxes, &status);
+        fits_write_key(fptr, TSTRING, "PROGRAM", (void *)"hitmis_explorer", NULL, &status);
+        fits_write_key(fptr, TSTRING, "CAMERA", (void *)(m_cameraName.c_str()), NULL, &status);
+        fits_write_key(fptr, TULONGLONG, "TIMESTAMP", &(m_timestamp), NULL, &status);
+        fits_write_key(fptr, TUSHORT, "BZERO", &bzero, NULL, &status);
+        fits_write_key(fptr, TUSHORT, "BSCALE", &bscale, NULL, &status);
+        fits_write_key(fptr, TFLOAT, "CCDTEMP", &(m_temperature), NULL, &status);
+        fits_write_key(fptr, TUINT, "EXPOSURE_MS", &(exposureTime), NULL, &status);
+        fits_write_key(fptr, TUSHORT, "BINX", &(m_binX), NULL, &status);
+        fits_write_key(fptr, TUSHORT, "BINY", &(m_binY), NULL, &status);
+
+        long fpixel[] = {1, 1};
+        fits_write_pix(fptr, TUSHORT, fpixel, (m_imageWidth) * (m_imageHeight), m_imageData, &status);
+        fits_close_file(fptr, &status);
+        if (outString != NULL && outStringSz > 0)
+        {
+            _snprintf(outString, outStringSz, "wrote %d of %d", i, n);
+        }
+        delete[] fileName_s;
+        return;
+    }
+    delete[] fileName_s;
+print_err:
+{
+    _snprintf(outString, outStringSz, "failed %d of %d", i, n);
+}
 }

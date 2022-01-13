@@ -1,3 +1,4 @@
+/*
 #include "RingBuf.hpp"
 #include <unistd.h>
 #include <iostream>
@@ -496,3 +497,4 @@ void ThermalPID_Control(clkgen_t id, void *_pid_data)
         usleep(sleepTime);
     }
 }
+*/
