@@ -577,16 +577,15 @@ bool CImageData::FindOptimumExposure(float &targetExposure, float percentilePixe
 
 #if !defined(OS_Windows)
 #define _snprintf snprintf
+#define DIR_DELIM "\\"
+#else
+#define DIR_DELIM "/"
 #endif
 
 void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char *outString, ssize_t outStringSz)
 {
     static char defaultFilePrefix[] = "atik";
-#if !defined(OS_Windows)
-    static char defaultDirPrefix[] = "./fits/";
-#else
-    static char defaultDirPrefix[] = ".\\fits\\";
-#endif
+    static char defaultDirPrefix[] = "." DIR_DELIM "fits" DIR_DELIM;
     if ((filePrefix == NULL) || (strlen(filePrefix) == 0))
         filePrefix = defaultFilePrefix;
     if ((DirPrefix == NULL) || (strlen(DirPrefix) == 0))
@@ -600,12 +599,12 @@ void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char 
     unsigned int exposureTime = m_exposureTime * 1000U;
     if (n > 0)
     {
-        if (_snprintf(fileName, sizeof(fileName), "%s\\%s_%ums_%d_%d_%llu.fit", DirPrefix, filePrefix, exposureTime, i, n, (unsigned long long) m_timestamp) > (int) sizeof(fileName))
+        if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s_%ums_%d_%d_%llu.fit", DirPrefix, filePrefix, exposureTime, i, n, (unsigned long long) m_timestamp) > (int) sizeof(fileName))
             goto print_err;
     }
     else
     {
-        if (_snprintf(fileName, sizeof(fileName), "%s\\%s_%ums_%llu.fit", DirPrefix, filePrefix, exposureTime, (unsigned long long) m_timestamp) > (int) sizeof(fileName))
+        if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s_%ums_%llu.fit", DirPrefix, filePrefix, exposureTime, (unsigned long long) m_timestamp) > (int) sizeof(fileName))
             goto print_err;
     }
 
@@ -634,6 +633,10 @@ void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char 
         }
         delete[] fileName_s;
         return;
+    }
+    else
+    {
+        dbprintlf(FATAL "Could not create file %s", fileName_s);
     }
     delete[] fileName_s;
 print_err:
