@@ -591,7 +591,7 @@ void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char 
     if ((filePrefix == NULL) || (strlen(filePrefix) == 0))
         filePrefix = defaultFilePrefix;
     if ((DirPrefix == NULL) || (strlen(DirPrefix) == 0))
-        DirPrefix = defaultFilePrefix;
+        DirPrefix = defaultDirPrefix;
     char fileName[256];
     char *fileName_s;
     fitsfile *fptr;
