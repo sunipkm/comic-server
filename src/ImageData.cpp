@@ -577,9 +577,9 @@ bool CImageData::FindOptimumExposure(float &targetExposure, float percentilePixe
 
 #if !defined(OS_Windows)
 #define _snprintf snprintf
-#define DIR_DELIM "\\"
-#else
 #define DIR_DELIM "/"
+#else
+#define DIR_DELIM "\\"
 #endif
 
 void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char *outString, ssize_t outStringSz)
