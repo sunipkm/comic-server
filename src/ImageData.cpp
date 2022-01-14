@@ -367,7 +367,10 @@ uint16_t CImageData::DataMin()
 {
     uint16_t res = 0xffff;
     if (!HasData())
+    {
+        dbprintlf(FATAL "HasData");
         return 0xffff;
+    }
     int idx = m_imageWidth * m_imageHeight;
     while (idx--)
         if (res > m_imageData[idx])
@@ -379,7 +382,10 @@ uint16_t CImageData::DataMax()
 {
     uint16_t res = 0;
     if (!HasData())
-        return 0;
+    {
+        dbprintlf(FATAL "HasData");
+        return 0xffff;
+    }
     int idx = m_imageWidth * m_imageHeight;
     while (idx--)
         if (res < m_imageData[idx])
