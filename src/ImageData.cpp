@@ -167,19 +167,34 @@ CImageData &CImageData::operator=(const CImageData &rhs)
 
     if ((rhs.m_imageWidth == 0) || (rhs.m_imageHeight == 0) || (rhs.m_imageData == 0))
     {
-        return *this;
+        return;
     }
 
     m_imageData = new unsigned short[rhs.m_imageWidth * rhs.m_imageHeight];
 
     if (m_imageData == 0)
     {
-        return *this;
+        return;
     }
 
     memcpy(m_imageData, rhs.m_imageData, rhs.m_imageWidth * rhs.m_imageHeight * sizeof(unsigned short));
     m_imageWidth = rhs.m_imageWidth;
     m_imageHeight = rhs.m_imageHeight;
+    m_exposureTime = rhs.m_exposureTime;
+    m_binX = rhs.m_binX;
+    m_binY = rhs.m_binY;
+    m_temperature = rhs.m_temperature;
+    m_cameraName = rhs.m_cameraName;
+    m_timestamp = rhs.m_timestamp;
+
+    m_jpegData = nullptr;
+    sz_jpegData = -1;
+    convert_jpeg = false;
+    JpegQuality = rhs.JpegQuality;
+    pixelMin = rhs.pixelMin;
+    pixelMax = rhs.pixelMax;
+    autoscale = rhs.autoscale;
+    dbprintlf("autoscale = %d, rhs.autoscale = %d, this->autoscale = %d", autoscale, rhs.autoscale, this->autoscale);
     return *this;
 }
 
