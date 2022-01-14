@@ -410,8 +410,10 @@ void CImageData::ConvertJPEG()
         min = pixelMin;
         max = pixelMax < 0 ? 0xffff : (pixelMax > 0xffff ? 0xffff : pixelMax);
     }
+    dbprintlf("Scale min: %u, max: %u", min, max);
     // scaling
     float scale = 0xffff / ((float)(max - min));
+    dbprintlf("Image scale: %f", scale);
     // Data conversion
     for (int i = 0; i < m_imageWidth * m_imageHeight; i++) // for each pixel in raw image
     {
@@ -424,7 +426,7 @@ void CImageData::ConvertJPEG()
         }
         else // scaling
         {
-            uint8_t tmp = (imgptr[i] - min) * scale / 0x100;
+            uint8_t tmp = ((imgptr[i] - min) / 0x100) * scale;
             data[idx + 0] = tmp;
             data[idx + 1] = tmp;
             data[idx + 2] = tmp;
