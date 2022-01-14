@@ -1,5 +1,6 @@
 #include "CameraUnit_ATIK.hpp"
 #include "meb_print.h"
+#include "gpiodev/gpiodev.h"
 #include <signal.h>
 #include <unistd.h>
 #include <string.h>
@@ -98,6 +99,13 @@ int main(int argc, char *argv[])
     int pixelUncertainty = 5000;
     int maxBin = 4;
     int imgXMin = 100, imgYMin = 335, imgXMax = -1, imgYMax = -1;
+
+    gpioSetMode(11, GPIO_OUT);
+    gpioWrite(11, GPIO_HIGH);
+    gpioSetMode(24, GPIO_OUT);
+    gpioWrite(24, GPIO_HIGH);
+
+    sleep(1);
 
     signal(SIGINT, sighandler);
     CCameraUnit *cam = nullptr;

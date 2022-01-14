@@ -1,7 +1,8 @@
 CXX = g++
 CC = gcc
 
-EDCXXFLAGS:= -Wall -O2 -std=c++11 -I drivers/ -I include/ -I network/ -I clkgen/include $(CXXFLAGS) -DDEFINE_WEAK
+EDCFLAGS:= -std=gnu11 -O2 $(CFLAGS)
+EDCXXFLAGS:= -Wall -O2 -std=c++11 -I ./ -I drivers/ -I include/ -I network/ -I clkgen/include $(CXXFLAGS) -DDEFINE_WEAK
 EDLDFLAGS:= -lpthread -lcfitsio -lncursest -lm $(LDFLAGS)
 
 ifeq ($(OS),Windows_NT)
@@ -36,17 +37,21 @@ else
     endif
 endif
 
+COBJS = gpiodev/gpiodev.o
 CPPOBJS = $(patsubst %.cpp,%.o,$(wildcard src/*.cpp))
 CLKGENTARGET = clkgen/libclkgen.a
 
-all: $(CPPOBJS) $(CLKGENTARGET)
-	$(CXX) -o atiktest.out $(CPPOBJS) $(CLKGENTARGET) $(EDLDFLAGS)
+all: $(COBJS) $(CPPOBJS) $(CLKGENTARGET)
+	$(CXX) -o atiktest.out $(COBJS) $(CPPOBJS) $(CLKGENTARGET) $(EDLDFLAGS)
 
 $(CLKGENTARGET):
 	cd clkgen && make && cd ..
 
 %.o: %.cpp
 	$(CXX) $(EDCXXFLAGS) -o $@ -c $<
+
+%.o: %.c
+	$(CC) $(EDCFLAGS) -o $@ -c $<
 
 .PHONY: clean
 
