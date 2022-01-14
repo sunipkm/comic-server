@@ -21,7 +21,6 @@ class CCameraUnit_ATIK : public CCameraUnit
     struct ARTEMISPROPERTIES props;
 
     bool m_initializationOK;
-    // CriticalSection criticalSection_;
     std::mutex cs_;
     bool cancelCapture_;
     std::string status_;

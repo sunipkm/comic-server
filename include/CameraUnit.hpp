@@ -95,10 +95,10 @@ public:
      * 
      * @param x X axis binning
      * @param y Y axis binning
-     * @param x_min Leftmost pixel index
-     * @param x_max Rightmost pixel index
-     * @param y_min Topmost pixel index
-     * @param y_max Bottommost pixel index
+     * @param x_min Leftmost pixel index (unbinned)
+     * @param x_max Rightmost pixel index (unbinned)
+     * @param y_min Topmost pixel index (unbinned)
+     * @param y_max Bottommost pixel index (unbinned)
      */
     virtual void SetBinningAndROI(int x, int y, int x_min = 0, int x_max = 0, int y_min = 0, int y_max = 0) = 0;
     /**
