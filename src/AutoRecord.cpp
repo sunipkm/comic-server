@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     while (!done)
     {
         static char fname[512];
-        static char dirname[512];
+        static char dirname[256];
         static int bin = 1;
         static float exposure = 0.2;
         static long long int timenow = 0;
@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
                 unsigned char *ptr;
                 int sz;
                 img.GetJPEGData(ptr, sz);
-                snprintf(fname, sizeof(fname), "dirname/%llu.jpg", ++counter);
+                snprintf(fname, sizeof(fname), "%s/%llu.jpg", dirname, ++counter);
                 FILE *fp = fopen(fname, "wb");
                 fwrite(ptr, sz, 1, fp);
                 fclose(fp);
