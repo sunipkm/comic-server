@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
         {
             risetime = getSunRiseTime();
             settime = getSunSetTime();
-            exposing == false;
+            exposing = false;
             usleep(1000000 * cadence);
         }
         else
