@@ -416,16 +416,10 @@ void CImageData::ConvertJPEG()
     for (int i = 0; i < m_imageWidth * m_imageHeight; i++) // for each pixel in raw image
     {
         int idx = 3 * i;         // RGB pixel in JPEG source bitmap
-        if (imgptr[i] == 0xffff) // saturation
+        if (imgptr[i] > max) // saturation
         {
             data[idx + 0] = 0xff;
             data[idx + 1] = 0x0;
-            data[idx + 2] = 0x0;
-        }
-        else if (imgptr[i] > max) // higher
-        {
-            data[idx + 0] = 0xff;
-            data[idx + 1] = 0xa5;
             data[idx + 2] = 0x0;
         }
         else // scaling
@@ -596,7 +590,7 @@ void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char 
     fitsfile *fptr;
     int status = 0, bitpix = USHORT_IMG, naxis = 2;
     int bzero = 32768, bscale = 1;
-    long naxes[2] = {(long)(m_imageWidth), (long)(m_imageWidth)};
+    long naxes[2] = {(long)(m_imageWidth), (long)(m_imageHeight)};
     unsigned int exposureTime = m_exposureTime * 1000U;
     if (n > 0)
     {
