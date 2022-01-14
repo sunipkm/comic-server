@@ -251,12 +251,15 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
     float exposure_now = exposure_;
     if (exposure_ms < 1)
         exposure_ms = 1;
+    
+    uint64_t exposure_start; 
 
     if (!m_initializationOK)
     {
         goto exit_err;
     }
 
+    exposure_start = getTime();
     if (HasError(ArtemisStartExposureMS(hCam, exposure_ms), __LINE__))
     {
         goto exit_err;
@@ -297,7 +300,7 @@ CImageData CCameraUnit_ATIK::CaptureImage(long int &retryCount)
         goto exit_err;
     }
     memcpy(retVal.GetImageData(), pImgBuf, w * h * 2);
-    retVal.SetImageMetadata(exposure_now, binx, biny, GetTemperature(), getTime(), CameraName());
+    retVal.SetImageMetadata(exposure_now, binx, biny, GetTemperature(), exposure_start, CameraName());
 exit_err:
     // printf("Exiting capture\n");
     return retVal;
