@@ -268,7 +268,7 @@ public:
      * @param pixelTargetUncertainty Value target uncertainty (inpit, default: 5000)
      * @return bool Returns true.
      */
-    bool FindOptimumExposure(float &targetExposure, int &bin, float percentilePixel = 0.8, int pixelTarget = 40000, float maxAllowedExposure = 10.0, int maxAllowedBin = 4, int numPixelExclusion = 100, int pixelTargetUncertainty = 5000);
+    bool FindOptimumExposure(float &targetExposure, int &bin, float percentilePixel = 80, int pixelTarget = 40000, float maxAllowedExposure = 10.0, int maxAllowedBin = 4, int numPixelExclusion = 100, int pixelTargetUncertainty = 5000);
     /**
      * @brief Find optimum exposure from this exposure without binning adjustment
      * 
@@ -280,7 +280,7 @@ public:
      * @param pixelTargetUncertainty Value target uncertainty (inpit, default: 5000)
      * @return bool Returns true.
      */
-    bool FindOptimumExposure(float &targetExposure, float percentilePixel = 0.8, int pixelTarget = 40000, float maxAllowedExposure = 10.0, int numPixelExclusion = 100, int pixelTargetUncertainty = 5000);
+    bool FindOptimumExposure(float &targetExposure, float percentilePixel = 80, int pixelTarget = 40000, float maxAllowedExposure = 10.0, int numPixelExclusion = 100, int pixelTargetUncertainty = 5000);
     /**
      * @brief Save image contained in CImageData
      * 
