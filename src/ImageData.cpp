@@ -414,11 +414,13 @@ void CImageData::ConvertJPEG()
     uint16_t min, max;
     if (autoscale)
     {
+        dbprintlf("Autoscale");
         min = DataMin();
         max = DataMax();
     }
     else
     {
+        dbprintlf("Pixelmin: %d, pixelmax: %d", pixelMin, pixelMax);
         min = (uint16_t)pixelMin;
         max = (uint16_t)(pixelMax < 0 ? 0xffff : (pixelMax > 0xffff ? 0xffff : pixelMax));
     }
