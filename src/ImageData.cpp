@@ -153,6 +153,7 @@ CImageData::CImageData(const CImageData &rhs)
     pixelMin = rhs.pixelMin;
     pixelMax = rhs.pixelMax;
     autoscale = rhs.autoscale;
+    dbprintlf("autoscale = %d, rhs.autoscale = %d, this->autoscale = %d", autoscale, rhs.autoscale, this->autoscale);
 }
 
 CImageData &CImageData::operator=(const CImageData &rhs)
