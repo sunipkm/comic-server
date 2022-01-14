@@ -145,6 +145,7 @@ int main(int argc, char *argv[])
             exposing = true;
             CImageData img = cam->CaptureImage(retryCount);
             snprintf(dirname, sizeof(dirname), "fits/%s", get_date());
+            checknmakedir(dirname);
             img.SaveFits(NULL, dirname);
             img.FindOptimumExposure(exposure, bin, pixelPercentile, pixelTarget, maxExposure, maxBin, 100, pixelUncertainty);
             cam->SetBinningAndROI(bin, bin, imgXMin, imgXMax, imgYMin, imgYMax);
