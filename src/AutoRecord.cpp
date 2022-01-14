@@ -4,6 +4,43 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <dirent.h>
+#include <errno.h>
+
+void checknmakedir(const char *path)
+{
+    DIR *dir = opendir(path);
+    if (dir)
+    {
+        /* Directory exists. */
+        closedir(dir);
+    }
+    else if (ENOENT == errno)
+    {
+        char buf[512];
+        snprintf(buf, sizeof(buf), "mkdir -p %s", path);
+        system(buf);
+    }
+    else
+    {
+        dbprintlf(FATAL "could not create directory %s", path);
+    }
+}
+
+static inline char *get_date()
+{
+#ifndef _MSC_VER
+    static __thread char buf[128];
+#else
+    __declspec( thread ) static char buf[128];
+#endif
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    snprintf(buf, sizeof(buf), "%04d%02d%02d",
+             tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
+    return buf;
+}
+
 #include <chrono>
 
 static inline long long int getTime()
@@ -97,6 +134,7 @@ int main(int argc, char *argv[])
     while (!done)
     {
         static char fname[512];
+        static char dirname[512];
         static int bin = 1;
         static float exposure = 0.2;
         static long long int timenow = 0;
@@ -106,7 +144,8 @@ int main(int argc, char *argv[])
         {
             exposing = true;
             CImageData img = cam->CaptureImage(retryCount);
-            img.SaveFits(NULL, NULL);
+            snprintf(dirname, sizeof(dirname), "fits/%s", get_date());
+            img.SaveFits(NULL, dirname);
             img.FindOptimumExposure(exposure, bin, pixelPercentile, pixelTarget, maxExposure, maxBin, 100, pixelUncertainty);
             cam->SetBinningAndROI(bin, bin, imgXMin, imgXMax, imgYMin, imgYMax);
             cam->SetExposure(exposure);
@@ -143,7 +182,7 @@ int main(int argc, char *argv[])
             timedelta -= minutes * 60;
             if (minutes > 0)
                 bprintf("%d minutes ", minutes);
-            bprintlf("%d seconds", (int) timedelta);
+            bprintlf("%d seconds", (int)timedelta);
             usleep(1000000 * cadence);
         }
     }
