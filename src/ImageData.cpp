@@ -373,8 +373,13 @@ uint16_t CImageData::DataMin()
     }
     int idx = m_imageWidth * m_imageHeight;
     while (idx--)
+    {
         if (res > m_imageData[idx])
+        {
             res = m_imageData[idx];
+            dbprintlf(BLUE_FG "Triggered");
+        }
+    }
     return res;
 }
 
@@ -388,8 +393,13 @@ uint16_t CImageData::DataMax()
     }
     int idx = m_imageWidth * m_imageHeight;
     while (idx--)
+    {
         if (res < m_imageData[idx])
+        {
             res = m_imageData[idx];
+            dbprintlf(BLUE_FG "Triggered");
+        }
+    }
     return res;
 }
 
@@ -423,7 +433,7 @@ void CImageData::ConvertJPEG()
     // Data conversion
     for (int i = 0; i < m_imageWidth * m_imageHeight; i++) // for each pixel in raw image
     {
-        int idx = 3 * i;         // RGB pixel in JPEG source bitmap
+        int idx = 3 * i;     // RGB pixel in JPEG source bitmap
         if (imgptr[i] > max) // saturation
         {
             data[idx + 0] = 0xff;
@@ -602,12 +612,12 @@ void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char 
     unsigned int exposureTime = m_exposureTime * 1000U;
     if (n > 0)
     {
-        if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s_%ums_%d_%d_%llu.fit", DirPrefix, filePrefix, exposureTime, i, n, (unsigned long long) m_timestamp) > (int) sizeof(fileName))
+        if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s_%ums_%d_%d_%llu.fit", DirPrefix, filePrefix, exposureTime, i, n, (unsigned long long)m_timestamp) > (int)sizeof(fileName))
             goto print_err;
     }
     else
     {
-        if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s_%ums_%llu.fit", DirPrefix, filePrefix, exposureTime, (unsigned long long) m_timestamp) > (int) sizeof(fileName))
+        if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s_%ums_%llu.fit", DirPrefix, filePrefix, exposureTime, (unsigned long long)m_timestamp) > (int)sizeof(fileName))
             goto print_err;
     }
 
