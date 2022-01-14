@@ -368,7 +368,6 @@ uint16_t CImageData::DataMin()
     uint16_t res = 0xffff;
     if (!HasData())
     {
-        dbprintlf(FATAL "HasData");
         return 0xffff;
     }
     int idx = m_imageWidth * m_imageHeight;
@@ -377,7 +376,6 @@ uint16_t CImageData::DataMin()
         if (res > m_imageData[idx])
         {
             res = m_imageData[idx];
-            dbprintlf(BLUE_FG "Triggered");
         }
     }
     return res;
@@ -388,7 +386,6 @@ uint16_t CImageData::DataMax()
     uint16_t res = 0;
     if (!HasData())
     {
-        dbprintlf(FATAL "HasData");
         return 0xffff;
     }
     int idx = m_imageWidth * m_imageHeight;
@@ -397,7 +394,6 @@ uint16_t CImageData::DataMax()
         if (res < m_imageData[idx])
         {
             res = m_imageData[idx];
-            dbprintlf(BLUE_FG "Triggered");
         }
     }
     return res;
@@ -418,7 +414,6 @@ void CImageData::ConvertJPEG()
     uint16_t min, max;
     if (autoscale)
     {
-        dbprintlf("Autoscale");
         min = DataMin();
         max = DataMax();
     }
