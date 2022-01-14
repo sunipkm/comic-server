@@ -91,14 +91,14 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
     {
         m_timestamp = getTime();
     }
+    this->JpegQuality = JpegQuality;
+    this->pixelMin = pixelMin;
+    this->pixelMax = pixelMax;
+    this->autoscale = autoscale;
 
     if (enableJpeg)
     {
         convert_jpeg = true;
-        this->JpegQuality = JpegQuality;
-        this->pixelMin = pixelMin;
-        this->pixelMax = pixelMax;
-        this->autoscale = autoscale;
         ConvertJPEG();
     }
 }
@@ -424,8 +424,8 @@ void CImageData::ConvertJPEG()
     }
     else
     {
-        min = (uint16_t) pixelMin;
-        max = (uint16_t) (pixelMax < 0 ? 0xffff : (pixelMax > 0xffff ? 0xffff : pixelMax));
+        min = (uint16_t)pixelMin;
+        max = (uint16_t)(pixelMax < 0 ? 0xffff : (pixelMax > 0xffff ? 0xffff : pixelMax));
     }
     dbprintlf("Scale min: %u, max: %u", min, max);
     // scaling
