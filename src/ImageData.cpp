@@ -120,7 +120,6 @@ void CImageData::SetImageMetadata(float exposureTime, int binX, int binY, float 
 CImageData::CImageData(const CImageData &rhs)
     : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
-    // printf("RHS called\n");
     ClearImage();
 
     if ((rhs.m_imageWidth == 0) || (rhs.m_imageHeight == 0) || (rhs.m_imageData == 0))
@@ -451,7 +450,7 @@ void CImageData::ConvertJPEG()
     // JPEG compression and image update
     if (!jpge::compress_image_to_jpeg_file_in_memory(m_jpegData, sz_jpegData, m_imageWidth, m_imageHeight, 3, data, params))
     {
-        printf("Failed to compress image to jpeg in memory\n");
+        dbprintlf(FATAL "Failed to compress image to jpeg in memory\n");
     }
 }
 

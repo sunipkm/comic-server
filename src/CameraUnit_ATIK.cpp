@@ -4,9 +4,9 @@
  * @brief Implementation of CameraUnit interfaces for ATIK Cameras
  * @version 0.1
  * @date 2022-01-03
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 #include "CameraUnit_ATIK.hpp"
 #include <stdint.h>
@@ -51,16 +51,16 @@ bool CCameraUnit_ATIK::HasError(int error, unsigned int line) const
     switch (error)
     {
     default:
-        printf("%s, %d: ATIK Error %d\n", __FILE__, line, error);
-        fflush(stdout);
+        fprintf(stderr, "%s, %d: ATIK Error %d\n", __FILE__, line, error);
+        fflush(stderr);
         return true;
     case ARTEMIS_OK:
         return false;
 
-#define ARTEMIS_ERROR(x)                                           \
-    case x:                                                        \
-        printf("%s, %d: ARTEMIS error: " #x "\n", __FILE__, line); \
-        fflush(stdout);                                            \
+#define ARTEMIS_ERROR(x)                                                    \
+    case x:                                                                 \
+        fprintf(stderr, "%s, %d: ARTEMIS error: " #x "\n", __FILE__, line); \
+        fflush(stderr);                                                     \
         return true;
 
         ARTEMIS_ERROR(ARTEMIS_INVALID_PARAMETER)
