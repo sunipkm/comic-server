@@ -167,14 +167,14 @@ CImageData &CImageData::operator=(const CImageData &rhs)
 
     if ((rhs.m_imageWidth == 0) || (rhs.m_imageHeight == 0) || (rhs.m_imageData == 0))
     {
-        return;
+        return *this;
     }
 
     m_imageData = new unsigned short[rhs.m_imageWidth * rhs.m_imageHeight];
 
     if (m_imageData == 0)
     {
-        return;
+        return *this;
     }
 
     memcpy(m_imageData, rhs.m_imageData, rhs.m_imageWidth * rhs.m_imageHeight * sizeof(unsigned short));
