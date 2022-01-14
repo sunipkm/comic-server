@@ -96,8 +96,6 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
     this->pixelMax = pixelMax;
     this->autoscale = autoscale;
 
-    dbprintlf("%d %d %d %d", JpegQuality, pixelMin, pixelMax, autoscale);
-
     if (enableJpeg)
     {
         convert_jpeg = true;
@@ -153,7 +151,6 @@ CImageData::CImageData(const CImageData &rhs)
     pixelMin = rhs.pixelMin;
     pixelMax = rhs.pixelMax;
     autoscale = rhs.autoscale;
-    dbprintlf("autoscale = %d, rhs.autoscale = %d, this->autoscale = %d", autoscale, rhs.autoscale, this->autoscale);
 }
 
 CImageData &CImageData::operator=(const CImageData &rhs)
@@ -194,7 +191,6 @@ CImageData &CImageData::operator=(const CImageData &rhs)
     pixelMin = rhs.pixelMin;
     pixelMax = rhs.pixelMax;
     autoscale = rhs.autoscale;
-    dbprintlf("autoscale = %d, rhs.autoscale = %d, this->autoscale = %d", autoscale, rhs.autoscale, this->autoscale);
     return *this;
 }
 
@@ -436,32 +432,32 @@ void CImageData::ConvertJPEG()
     uint8_t *data = new uint8_t[m_imageWidth * m_imageHeight * 3]; // 3 channels for RGB
     // autoscale
     uint16_t min, max;
-    dbprintlf("autoscale: %d, this->autoscale: %d", autoscale, this->autoscale);
-    dbprintlf("%d %d %d %d", JpegQuality, pixelMin, pixelMax, autoscale);
     if (autoscale)
     {
-        dbprintlf("Autoscale");
         min = DataMin();
         max = DataMax();
     }
     else
     {
-        dbprintlf("Pixelmin: %d, pixelmax: %d", pixelMin, pixelMax);
         min = pixelMin < 0 ? 0 : (pixelMin > 0xffff ? 0xffff : pixelMin);
         max = (uint16_t)(pixelMax < 0 ? 0xffff : (pixelMax > 0xffff ? 0xffff : pixelMax));
     }
-    dbprintlf("Scale min: %u, max: %u", min, max);
     // scaling
     float scale = 0xffff / ((float)(max - min));
-    dbprintlf("Image scale: %f", scale);
     // Data conversion
     for (int i = 0; i < m_imageWidth * m_imageHeight; i++) // for each pixel in raw image
     {
         int idx = 3 * i;     // RGB pixel in JPEG source bitmap
-        if (imgptr[i] > max) // saturation
+        if (imgptr[i] == 0xffff) // saturation
         {
             data[idx + 0] = 0xff;
             data[idx + 1] = 0x0;
+            data[idx + 2] = 0x0;
+        }
+        else if (imgptr[i] > max) // limit
+        {
+            data[idx + 0] = 0xff;
+            data[idx + 1] = 0xa5;
             data[idx + 2] = 0x0;
         }
         else // scaling
