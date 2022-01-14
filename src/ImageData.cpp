@@ -412,6 +412,7 @@ void CImageData::ConvertJPEG()
     uint8_t *data = new uint8_t[m_imageWidth * m_imageHeight * 3]; // 3 channels for RGB
     // autoscale
     uint16_t min, max;
+    dbprintlf("autoscale: %d, this->autoscale: %d", autoscale, this->autoscale);
     if (autoscale)
     {
         dbprintlf("Autoscale");
@@ -421,7 +422,7 @@ void CImageData::ConvertJPEG()
     else
     {
         dbprintlf("Pixelmin: %d, pixelmax: %d", pixelMin, pixelMax);
-        min = (uint16_t)pixelMin;
+        min = pixelMin < 0 ? 0 : (pixelMin > 0xffff ? 0xffff : pixelMin);
         max = (uint16_t)(pixelMax < 0 ? 0xffff : (pixelMax > 0xffff ? 0xffff : pixelMax));
     }
     dbprintlf("Scale min: %u, max: %u", min, max);
