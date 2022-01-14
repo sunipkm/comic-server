@@ -96,6 +96,8 @@ CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageDat
     this->pixelMax = pixelMax;
     this->autoscale = autoscale;
 
+    dbprintlf("%d %d %d %d", JpegQuality, pixelMin, pixelMax, autoscale);
+
     if (enableJpeg)
     {
         convert_jpeg = true;
@@ -138,9 +140,15 @@ CImageData::CImageData(const CImageData &rhs)
     m_imageWidth = rhs.m_imageWidth;
     m_imageHeight = rhs.m_imageHeight;
     m_exposureTime = rhs.m_exposureTime;
+    m_binX = rhs.m_binX;
+    m_binY = rhs.m_binY;
+    m_temperature = rhs.m_temperature;
+    m_cameraName = rhs.m_cameraName;
+    m_timestamp = rhs.m_timestamp;
 
-    m_jpegData = rhs.m_jpegData;
-    sz_jpegData = rhs.sz_jpegData;
+    m_jpegData = nullptr;
+    sz_jpegData = -1;
+    convert_jpeg = false;
     JpegQuality = rhs.JpegQuality;
     pixelMin = rhs.pixelMin;
     pixelMax = rhs.pixelMax;
@@ -413,6 +421,7 @@ void CImageData::ConvertJPEG()
     // autoscale
     uint16_t min, max;
     dbprintlf("autoscale: %d, this->autoscale: %d", autoscale, this->autoscale);
+    dbprintlf("%d %d %d %d", JpegQuality, pixelMin, pixelMax, autoscale);
     if (autoscale)
     {
         dbprintlf("Autoscale");
