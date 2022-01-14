@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
                 unsigned char *ptr;
                 int sz;
                 img.GetJPEGData(ptr, sz);
-                snprintf(fname, sizeof(fname), "fits/%llu.jpg", ++counter);
+                snprintf(fname, sizeof(fname), "dirname/%llu.jpg", ++counter);
                 FILE *fp = fopen(fname, "wb");
                 fwrite(ptr, sz, 1, fp);
                 fclose(fp);
@@ -192,6 +192,7 @@ int main(int argc, char *argv[])
             if (minutes > 0)
                 bprintf("%d minutes ", minutes);
             bprintlf("%d seconds", (int)timedelta);
+            counter = 0;
             usleep(1000000 * cadence);
         }
     }
