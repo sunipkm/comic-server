@@ -4,9 +4,9 @@
  * @brief Image Data Storage Methods Implementation
  * @version 0.1
  * @date 2022-01-03
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 #include "ImageData.hpp"
 
@@ -58,7 +58,6 @@ CImageData::CImageData()
 CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, float exposureTime, int binX, int binY, float temperature, uint64_t timestamp, std::string cameraName, bool enableJpeg, int JpegQuality, int pixelMin, int pixelMax, bool autoscale)
     : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
-    dbprintlf("CImageData(width, height) constructor called on %p", this);
     ClearImage();
 
     if ((imageWidth <= 0) || (imageHeight <= 0))
@@ -121,7 +120,6 @@ void CImageData::SetImageMetadata(float exposureTime, int binX, int binY, float 
 CImageData::CImageData(const CImageData &rhs)
     : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
-    dbprintlf("Copy constructor called: %p to %p", &rhs, this);
     ClearImage();
 
     if ((rhs.m_imageWidth == 0) || (rhs.m_imageHeight == 0) || (rhs.m_imageData == 0))
@@ -157,7 +155,6 @@ CImageData::CImageData(const CImageData &rhs)
 
 CImageData &CImageData::operator=(const CImageData &rhs)
 {
-    dbprintlf("Assign %p to %p", &rhs, this);
     if (&rhs == this)
     { // self asignment
         return *this;
@@ -199,7 +196,6 @@ CImageData &CImageData::operator=(const CImageData &rhs)
 
 CImageData::~CImageData()
 {
-    dbprintlf("Destructor called on %p", this);
     if (m_imageData != NULL)
         delete[] m_imageData;
     if (m_jpegData != nullptr)
@@ -330,7 +326,7 @@ void CImageData::ApplyBinning(int binX, int binY)
         return;
     }
 
-    short newImageWidth = GetImageWidth() / binX;
+    short newImageWidth = GetWidth() / binX;
     short newImageHeight = GetImageHeight() / binY;
 
     short binSourceImageWidth = newImageWidth * binX;
@@ -451,7 +447,7 @@ void CImageData::ConvertJPEG()
     // Data conversion
     for (int i = 0; i < m_imageWidth * m_imageHeight; i++) // for each pixel in raw image
     {
-        int idx = 3 * i;     // RGB pixel in JPEG source bitmap
+        int idx = 3 * i;         // RGB pixel in JPEG source bitmap
         if (imgptr[i] == 0xffff) // saturation
         {
             data[idx + 0] = 0xff;
@@ -488,6 +484,7 @@ void CImageData::ConvertJPEG()
     {
         dbprintlf(FATAL "Failed to compress image to jpeg in memory\n");
     }
+    delete[] data;
 }
 
 void CImageData::GetJPEGData(unsigned char *&ptr, int &sz)
@@ -619,7 +616,7 @@ bool CImageData::FindOptimumExposure(float &targetExposure, float percentilePixe
 #define DIR_DELIM "\\"
 #endif
 
-void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char *outString, ssize_t outStringSz)
+void CImageData::SaveFits(char *filePrefix, char *DirPrefix, bool filePrefixIsName, int i, int n, char *outString, ssize_t outStringSz)
 {
     static char defaultFilePrefix[] = "atik";
     static char defaultDirPrefix[] = "." DIR_DELIM "fits" DIR_DELIM;
@@ -634,15 +631,30 @@ void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char 
     int bzero = 32768, bscale = 1;
     long naxes[2] = {(long)(m_imageWidth), (long)(m_imageHeight)};
     unsigned int exposureTime = m_exposureTime * 1000U;
-    if (n > 0)
+    if (!filePrefixIsName)
     {
-        if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s_%ums_%d_%d_%llu.fit", DirPrefix, filePrefix, exposureTime, i, n, (unsigned long long)m_timestamp) > (int)sizeof(fileName))
-            goto print_err;
+        if (n > 0)
+        {
+            if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s_%ums_%d_%d_%llu.fit", DirPrefix, filePrefix, exposureTime, i, n, (unsigned long long)m_timestamp) > (int)sizeof(fileName))
+                goto print_err;
+        }
+        else
+        {
+            if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s_%ums_%llu.fit", DirPrefix, filePrefix, exposureTime, (unsigned long long)m_timestamp) > (int)sizeof(fileName))
+                goto print_err;
+        }
     }
     else
     {
-        if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s_%ums_%llu.fit", DirPrefix, filePrefix, exposureTime, (unsigned long long)m_timestamp) > (int)sizeof(fileName))
-            goto print_err;
+        if (n > 0)
+        {
+            dbprintlf(FATAL "Saving snapshots is not allowed with provided file name");
+        }
+        else
+        {
+            if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s.fit", DirPrefix, filePrefix, exposureTime, (unsigned long long)m_timestamp) > (int)sizeof(fileName))
+                goto print_err;
+        }
     }
 
     unlink(fileName);
@@ -678,6 +690,7 @@ void CImageData::SaveFits(char *filePrefix, char *DirPrefix, int i, int n, char 
     delete[] fileName_s;
 print_err:
 {
-    _snprintf(outString, outStringSz, "failed %d of %d", i, n);
+    if (outString != NULL && outStringSz > 0)
+        _snprintf(outString, outStringSz, "failed %d of %d", i, n);
 }
 }

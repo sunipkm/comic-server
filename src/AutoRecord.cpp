@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
                 unsigned char *ptr;
                 int sz;
                 img.GetJPEGData(ptr, sz);
-                snprintf(fname, sizeof(fname), "%s/%llu.jpg", dirname, ++counter);
+                snprintf(fname, sizeof(fname), "%s/%llu.jpg", dirname, img.GetTimestamp());
                 FILE *fp = fopen(fname, "wb");
                 fwrite(ptr, sz, 1, fp);
                 fclose(fp);
