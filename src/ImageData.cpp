@@ -652,7 +652,7 @@ void CImageData::SaveFits(char *filePrefix, char *DirPrefix, bool filePrefixIsNa
         }
         else
         {
-            if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s.fit", DirPrefix, filePrefix, exposureTime, (unsigned long long)m_timestamp) > (int)sizeof(fileName))
+            if (_snprintf(fileName, sizeof(fileName), "%s" DIR_DELIM "%s.fit", DirPrefix, filePrefix))
                 goto print_err;
         }
     }
