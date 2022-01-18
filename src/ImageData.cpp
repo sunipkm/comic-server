@@ -326,7 +326,7 @@ void CImageData::ApplyBinning(int binX, int binY)
         return;
     }
 
-    short newImageWidth = GetWidth() / binX;
+    short newImageWidth = GetImageWidth() / binX;
     short newImageHeight = GetImageHeight() / binY;
 
     short binSourceImageWidth = newImageWidth * binX;
