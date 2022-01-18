@@ -58,7 +58,7 @@ CImageData::CImageData()
 CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, float exposureTime, int binX, int binY, float temperature, uint64_t timestamp, std::string cameraName, bool enableJpeg, int JpegQuality, int pixelMin, int pixelMax, bool autoscale)
     : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
-    dbprintlf("CImageData(width, height) constructor called");
+    dbprintlf("CImageData(width, height) constructor called on %p", this);
     ClearImage();
 
     if ((imageWidth <= 0) || (imageHeight <= 0))
