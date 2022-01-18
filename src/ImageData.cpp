@@ -58,6 +58,7 @@ CImageData::CImageData()
 CImageData::CImageData(int imageWidth, int imageHeight, unsigned short *imageData, float exposureTime, int binX, int binY, float temperature, uint64_t timestamp, std::string cameraName, bool enableJpeg, int JpegQuality, int pixelMin, int pixelMax, bool autoscale)
     : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
+    dbprintlf("CImageData(width, height) constructor called");
     ClearImage();
 
     if ((imageWidth <= 0) || (imageHeight <= 0))
@@ -120,6 +121,7 @@ void CImageData::SetImageMetadata(float exposureTime, int binX, int binY, float 
 CImageData::CImageData(const CImageData &rhs)
     : m_imageData(NULL), m_jpegData(nullptr), sz_jpegData(-1), convert_jpeg(false)
 {
+    dbprintlf("Copy constructor called: %p to %p", &rhs, this);
     ClearImage();
 
     if ((rhs.m_imageWidth == 0) || (rhs.m_imageHeight == 0) || (rhs.m_imageData == 0))
@@ -155,6 +157,7 @@ CImageData::CImageData(const CImageData &rhs)
 
 CImageData &CImageData::operator=(const CImageData &rhs)
 {
+    dbprintlf("Assign %p to %p", &rhs, this);
     if (&rhs == this)
     { // self asignment
         return *this;
@@ -196,6 +199,7 @@ CImageData &CImageData::operator=(const CImageData &rhs)
 
 CImageData::~CImageData()
 {
+    dbprintlf("Destructor called on %p", this);
     if (m_imageData != NULL)
         delete[] m_imageData;
     if (m_jpegData != nullptr)

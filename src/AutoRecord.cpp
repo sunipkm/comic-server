@@ -33,7 +33,7 @@ static inline char *get_date()
 #ifndef _MSC_VER
     static __thread char buf[128];
 #else
-    __declspec( thread ) static char buf[128];
+    __declspec(thread) static char buf[128];
 #endif
     time_t t = time(NULL);
     struct tm tm = *localtime(&t);
@@ -133,8 +133,12 @@ int main(int argc, char *argv[])
     cam->SetBinningAndROI(1, 1, imgXMin, imgXMax, imgYMin, imgYMax);
     unsigned long long counter = 0;
     // first run, get sunrise and sunset times
-    long long int risetime = getSunRiseTime();
-    long long int settime = getSunSetTime();
+    long long int risetime = 0;
+    while (risetime <= 0)
+        risetime = getSunRiseTime();
+    long long int settime = 0;
+    while (settime <= 0)
+        settime = getSunSetTime();
     if (risetime == 0 || settime == 0)
     {
         dbprintlf("Fatal error: Sun set time %lld, Sun rise time %lld", settime, risetime);
