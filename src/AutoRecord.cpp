@@ -137,7 +137,7 @@ int main(int argc, char *argv[])
         static long long int timenow = 0;
         static bool exposing = false;
         timenow = getTime();
-        if (timenow <= suntimes[1] && timenow >= suntimes[2]) // valid time, take photos
+        if (timenow >= suntimes[1] && timenow <= suntimes[2]) // valid time, take photos
         {
             exposing = true;
             CImageData img = cam->CaptureImage(retryCount);
