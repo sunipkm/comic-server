@@ -264,7 +264,7 @@ public:
      * @param outString Status output string pointer
      * @param outStringSz Status output string max size
      */
-    void SaveFits(char *filePrefix, char *DirPrefix, bool filePrefixIsName = false, int i = -1, int n = -1, char *outString = NULL, ssize_t outStringSz = 0);
+    void SaveFits(char *filePrefix, char *DirPrefix, bool filePrefixIsName = false, int i = -1, int n = -1, char *outString = NULL, ssize_t outStringSz = 0, bool syncOnWrite = false);
     /**
      * @brief Get the image height
      * 

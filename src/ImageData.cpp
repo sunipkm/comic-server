@@ -15,6 +15,11 @@
 #include <string.h>
 #include <unistd.h>
 #else
+#include <stdio.h>
+static inline void sync()
+{
+    _flushall();
+}
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -616,7 +621,7 @@ bool CImageData::FindOptimumExposure(float &targetExposure, float percentilePixe
 #define DIR_DELIM "\\"
 #endif
 
-void CImageData::SaveFits(char *filePrefix, char *DirPrefix, bool filePrefixIsName, int i, int n, char *outString, ssize_t outStringSz)
+void CImageData::SaveFits(char *filePrefix, char *DirPrefix, bool filePrefixIsName, int i, int n, char *outString, ssize_t outStringSz, bool syncOnWrite)
 {
     static char defaultFilePrefix[] = "atik";
     static char defaultDirPrefix[] = "." DIR_DELIM "fits" DIR_DELIM;
@@ -676,6 +681,10 @@ void CImageData::SaveFits(char *filePrefix, char *DirPrefix, bool filePrefixIsNa
         long fpixel[] = {1, 1};
         fits_write_pix(fptr, TUSHORT, fpixel, (m_imageWidth) * (m_imageHeight), m_imageData, &status);
         fits_close_file(fptr, &status);
+        if (syncOnWrite)
+        {
+            sync();
+        }
         if (outString != NULL && outStringSz > 0)
         {
             _snprintf(outString, outStringSz, "wrote %d of %d", i, n);
