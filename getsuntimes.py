@@ -8,7 +8,6 @@ from astral import LocationInfo
 import argparse
 # %%
 parser = argparse.ArgumentParser()
-parser.add_argument('--type', type=str, required=True)
 parser.add_argument('--lat', type=float, required=False)
 parser.add_argument('--lon', type=float, required=False)
 # %%
@@ -24,22 +23,10 @@ else:
     lon = -71.3162
 # %%
 loc = LocationInfo(timezone='UTC', latitude=lat, longitude=lon)
-s = sun(loc.observer, date = datetime.datetime.utcnow().date(), tzinfo = loc.timezone)
-sunrise = int((s['sunrise']+datetime.timedelta(minutes = 10)).timestamp()*1000)
-sunset = int((s['sunset']-datetime.timedelta(minutes = 10)).timestamp()*1000)
-now = int((datetime.datetime.utcnow()+datetime.timedelta(hours = 7)).timestamp()*1000)
-
-if (sunrise <= now < sunset): # daytime, find next sunrise
-    s = sun(loc.observer, date = (datetime.datetime.utcnow()+datetime.timedelta(hours = 24)).date(), tzinfo = loc.timezone)
-    sunrise = int((s['sunrise']+datetime.timedelta(minutes = 10)).timestamp()*1000)
-elif (sunrise < sunset < now):
-    s = sun(loc.observer, date = (datetime.datetime.utcnow()+datetime.timedelta(hours = 12)).date(), tzinfo = loc.timezone)
-    sunrise = int((s['sunrise']+datetime.timedelta(minutes = 10)).timestamp()*1000)
-
-# %%
-if args.type == 'sunrise':
-    print(sunrise) # in ms
-elif args.type == 'sunset':
-    print(sunset) # in ms
-else:
-    print(0)
+s0 = sun(loc.observer, date = datetime.datetime.utcnow().date(), tzinfo = loc.timezone)
+sunrise0 = int((s0['sunrise']+datetime.timedelta(minutes = 10)).timestamp()*1000)
+sunset0 = int((s0['sunset']-datetime.timedelta(minutes = 10)).timestamp()*1000)
+s1 = sun(loc.observer, date = (datetime.datetime.utcnow() + datetime.timedelta(hours = 24)).date(), tzinfo = loc.timezone)
+sunrise1 = int((s1['sunrise']+datetime.timedelta(minutes = 10)).timestamp()*1000)
+sunset1 = int((s1['sunset']-datetime.timedelta(minutes = 10)).timestamp()*1000)
+print(sunrise0, sunset0, sunrise1, sunset1)

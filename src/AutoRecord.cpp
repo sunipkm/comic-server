@@ -55,38 +55,31 @@ void sighandler(int sig)
     done = 1;
 }
 
-static inline long long int getSunRiseTime()
+static inline bool getSunTimes(long long int ts[4])
 {
-    FILE *pp = popen("./getsuntimes.py --type sunrise", "r");
-    long long int ts = 0;
+    bool retval = true;
+    int count = 0;
+    FILE *pp = popen("./getsuntimes.py", "r");
     if (pp != NULL)
     {
-        char buf[128] = {
-            0,
-        };
-        memset(buf, 0x0, sizeof(buf));
-        fread(buf, sizeof(buf), 1, pp);
-        ts = atoll(buf);
+        while (!feof(pp))
+        {
+            fscanf(pp, "%lld ", &ts[count]);
+            ++count;
+        }
         pclose(pp);
     }
-    return ts;
-}
-
-static inline long long int getSunSetTime()
-{
-    FILE *pp = popen("./getsuntimes.py --type sunset", "r");
-    long long int ts = 0;
-    if (pp != NULL)
+    else
     {
-        char buf[128] = {
-            0,
-        };
-        memset(buf, 0x0, sizeof(buf));
-        fread(buf, sizeof(buf), 1, pp);
-        ts = atoll(buf);
-        pclose(pp);
+        retval = false;
     }
-    return ts;
+    if (count == 4)
+    {
+        for (int i = 1; i < 4; i++)
+            if (ts[i - 1] >= ts[i])
+                retval = false;
+    }
+    return retval;
 }
 
 int main(int argc, char *argv[])
@@ -133,16 +126,8 @@ int main(int argc, char *argv[])
     cam->SetBinningAndROI(1, 1, imgXMin, imgXMax, imgYMin, imgYMax);
     unsigned long long counter = 0;
     // first run, get sunrise and sunset times
-    long long int risetime = 0;
-    while (risetime <= 0)
-        risetime = getSunRiseTime();
-    long long int settime = 0;
-    while (settime <= 0)
-        settime = getSunSetTime();
-    if (risetime == 0 || settime == 0)
-    {
-        dbprintlf("Fatal error: Sun set time %lld, Sun rise time %lld", settime, risetime);
-    }
+    long long int suntimes[4] = {0, };
+    while (getSunTimes(suntimes) != true);
     while (!done)
     {
         static char fname[512];
@@ -152,7 +137,7 @@ int main(int argc, char *argv[])
         static long long int timenow = 0;
         static bool exposing = false;
         timenow = getTime();
-        if (timenow <= risetime && timenow >= settime) // valid time, take photos
+        if (timenow <= suntimes[1] && timenow >= suntimes[2]) // valid time, take photos
         {
             exposing = true;
             CImageData img = cam->CaptureImage(retryCount);
@@ -178,15 +163,14 @@ int main(int argc, char *argv[])
         }
         else if (exposing == true)
         {
-            risetime = getSunRiseTime();
-            settime = getSunSetTime();
+            while (getSunTimes(suntimes) != true);
             exposing = false;
             usleep(1000000 * cadence);
         }
         else
         {
             tprintf("Time to next sunset: ");
-            long long int timedelta = (settime - timenow) / 1000;
+            long long int timedelta = (suntimes[1] - timenow) / 1000;
             int hours = timedelta / 3600;
             timedelta -= hours * 3600;
             if (hours > 0)
