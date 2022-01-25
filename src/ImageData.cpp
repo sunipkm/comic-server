@@ -20,11 +20,6 @@ static inline void sync()
 {
     _flushall();
 }
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#undef THIS_FILE
-static char THIS_FILE[] = __FILE__;
-#endif
 #endif
 #include "jpge.hpp"
 #include "meb_print.h"

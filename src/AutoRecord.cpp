@@ -82,6 +82,21 @@ static inline bool getSunTimes(long long int ts[4])
     return retval;
 }
 
+static bool backupData()
+{
+    bool retval = true;
+    FILE *pp = popen("./backup_data.sh", "r");
+    if (pp != NULL)
+    {
+        pclose(pp);
+    }
+    else
+    {
+        retval = false;
+    }
+    return retval;
+}
+
 int main(int argc, char *argv[])
 {
     int opt;
@@ -165,6 +180,7 @@ int main(int argc, char *argv[])
         {
             while (getSunTimes(suntimes) != true);
             exposing = false;
+            backupData();
             usleep(1000000 * cadence);
         }
         else

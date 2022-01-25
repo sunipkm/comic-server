@@ -15,6 +15,8 @@
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
 #include <windows.h>
 #define OS_Windows
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
 #endif
 #include <string>
 
