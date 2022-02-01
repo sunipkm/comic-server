@@ -133,6 +133,7 @@ int main(int argc, char *argv[])
     // first run, get sunrise and sunset times
     long long int suntimes[4] = {0, };
     while (getSunTimes(suntimes) != true);
+    bool firstRun = true;
     while (!done)
     {
         static char fname[512];
@@ -141,13 +142,17 @@ int main(int argc, char *argv[])
         static float exposure = 0.2;
         static long long int timenow = 0;
         static bool exposing = false;
+        if (firstRun)
+        {
+            snprintf(dirname, sizeof(dirname), "fits/%s", get_date());
+            checknmakedir(dirname);
+            firstRun = false;
+        }
         timenow = getTime();
         if (timenow >= suntimes[1] && timenow <= suntimes[2]) // valid time, take photos
         {
             exposing = true;
             CImageData img = cam->CaptureImage(retryCount);
-            snprintf(dirname, sizeof(dirname), "fits/%s", get_date());
-            checknmakedir(dirname);
             img.SaveFits(NULL, dirname);
             img.FindOptimumExposure(exposure, bin, pixelPercentile, pixelTarget, maxExposure, maxBin, 100, pixelUncertainty);
             cam->SetBinningAndROI(bin, bin, imgXMin, imgXMax, imgYMin, imgYMax);
@@ -170,6 +175,8 @@ int main(int argc, char *argv[])
         {
             while (getSunTimes(suntimes) != true);
             exposing = false;
+            snprintf(dirname, sizeof(dirname), "fits/%s", get_date());
+            checknmakedir(dirname);
             backupData();
             usleep(1000000 * cadence);
         }
@@ -177,6 +184,11 @@ int main(int argc, char *argv[])
         {
             tprintf("Time to next sunset: ");
             long long int timedelta = (suntimes[1] - timenow) / 1000;
+            if (timedelta < 0)
+            {
+                while (getSunTimes(suntimes) != true);
+                continue;
+            }
             int hours = timedelta / 3600;
             timedelta -= hours * 3600;
             if (hours > 0)

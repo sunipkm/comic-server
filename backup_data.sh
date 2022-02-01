@@ -7,3 +7,4 @@ then
 else
     echo "failure"
 fi
+exit
